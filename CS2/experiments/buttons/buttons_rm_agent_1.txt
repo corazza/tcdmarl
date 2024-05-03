@@ -1,0 +1,7 @@
+0 # initial state 
+(0, 1, 'b1', 0) # B1 button is pressed
+(1, 2, 'k', 0) # K2 button is pressed
+(2, 3, 'g', 1) # Goal state is reached
+(0, 4, 'k', 0) # K1 button is pressed
+(3, 3, 'True', 0) # state 3 is an absorbing state
+(4, 4, 'True', 0)
