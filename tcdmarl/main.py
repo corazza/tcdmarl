@@ -26,7 +26,7 @@ def main(experiment: str):
             num_times=NUM_SEPARATE_TRIALS
         )  # Get test object from config script
         run_multi_agent_experiment(
-            tester,
+            tester=tester,
             num_agents=tester.num_agents,
             num_times=NUM_SEPARATE_TRIALS,
             show_print=True,
@@ -35,8 +35,7 @@ def main(experiment: str):
         assert experiment == "centralized_routing"
         tester = routing_config(num_times=NUM_SEPARATE_TRIALS)
         run_centralized_experiment(
-            tester,
-            experiment=experiment,
+            tester=tester,
             num_agents=tester.num_agents,
             num_times=tester.num_times,
             show_print=True,
@@ -62,4 +61,5 @@ def main(experiment: str):
 
 
 if __name__ == "__main__":
+    # pylint: disable=no-value-for-parameter
     main()

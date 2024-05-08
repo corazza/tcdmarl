@@ -16,6 +16,7 @@ def routing_config(num_times: int) -> Tester:
     Tester : tester object
         Object containing the information necessary to run this experiment.
     """
+    num_agents: int = 2
     joint_rm_file: Path = RM_DIR / "routing" / "joint_rm.txt"
 
     local_rm_files: List[Path] = []

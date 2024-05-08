@@ -8,25 +8,29 @@
             "name": "Routing (decentralized)",
             "type": "debugpy",
             "request": "launch",
-            "program": "${workspaceFolder}/src/main.py",
+            "program": "${workspaceFolder}/tcdmarl/main.py",
             "console": "integratedTerminal",
-            "cwd": "${workspaceFolder}/tcdmarl",
             "args": [
                 "--experiment",
-                "buttons"
-            ]
+                "routing"
+            ],
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            }
         },
         {
             "name": "Routing (centralized)",
             "type": "debugpy",
             "request": "launch",
-            "program": "${workspaceFolder}/src/main.py",
+            "program": "${workspaceFolder}/tcdmarl/main.py",
             "console": "integratedTerminal",
-            "cwd": "${workspaceFolder}/tcdmarl",
             "args": [
                 "--experiment",
-                "centralized_buttons"
-            ]
+                "centralized_routing"
+            ],
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            }
         }
     ]
 }
