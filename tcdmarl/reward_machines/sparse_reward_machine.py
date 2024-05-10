@@ -31,7 +31,7 @@ class SparseRewardMachine:
 
     def __repr__(self):
         s = "MACHINE:\n"
-        s += "init: {}\n".format(self.u0)
+        s += f"init: {self.u0}\n"
         for trans_init_state in self.delta_u:
             for event in self.delta_u[trans_init_state]:
                 trans_end_state = self.delta_u[trans_init_state][event]

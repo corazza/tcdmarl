@@ -19,6 +19,7 @@ class Tester:
         rm_learning_file_list: List[Path],
         env_settings: Dict[str, Any],
         experiment: str,
+        use_prm: bool,
     ):
         """
         Parameters
@@ -40,6 +41,7 @@ class Tester:
         self.rm_learning_file_list = rm_learning_file_list
         self.env_settings = env_settings
         self.experiment = experiment
+        self.use_prm = use_prm
 
         self.min_steps = min_steps
         self.total_steps = total_steps

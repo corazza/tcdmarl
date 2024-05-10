@@ -11,6 +11,8 @@ from tcdmarl.Environments.common import (STR_TO_ACTION, CentralizedEnv,
                                          RoutingMap)
 from tcdmarl.reward_machines.sparse_reward_machine import SparseRewardMachine
 from tcdmarl.routing_config import routing_config
+from tcdmarl.tcrl.reward_machines.rm_common import ProbabilisticRewardMachine
+from tcdmarl.tcrl.utils import sparse_rm_to_prm
 
 
 class MultiAgentRoutingEnv(CentralizedEnv):  # TODO rename to CentralizedRoutingEnv
@@ -52,6 +54,17 @@ class MultiAgentRoutingEnv(CentralizedEnv):  # TODO rename to CentralizedRouting
         self.last_action = np.full(
             self.num_agents, -1, dtype=int
         )  # Initialize last action with garbage values
+
+        # PRMs x TL-CDs
+        self._use_prm: bool = False
+        self.prm: ProbabilisticRewardMachine = sparse_rm_to_prm(self.reward_machine)
+
+    def use_prm(self, value: bool) -> "MultiAgentRoutingEnv":
+        if not value:
+            return self
+        self.u = self.prm.get_initial_state()
+        self._use_prm = True
+        return self
 
     def get_map(self) -> RoutingMap:
         return self.map
@@ -96,8 +109,13 @@ class MultiAgentRoutingEnv(CentralizedEnv):  # TODO rename to CentralizedRouting
 
         for e in l:
             # Get the new reward machine state and the reward of this step
-            u2 = self.reward_machine.get_next_state(self.u, e)
-            rm_out = self.reward_machine.get_reward(self.u, u2)
+
+            if not self._use_prm:
+                u2 = self.reward_machine.get_next_state(self.u, e)
+                rm_out = self.reward_machine.get_reward(self.u, u2)
+            else:
+                u2 = self.prm.get_next_state(self.u, e)
+                rm_out = self.prm.get_reward(self.u, u2)
             r = r + rm_out
             # print(f"{self.u} --- ({e}, {rm_out}) ---> {u2}")
             # Update the reward machine state

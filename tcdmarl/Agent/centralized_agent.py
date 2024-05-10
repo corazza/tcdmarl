@@ -7,6 +7,9 @@ import numpy as np
 from reward_machines.sparse_reward_machine import SparseRewardMachine
 from tester.tester import Tester
 
+from tcdmarl.tcrl.reward_machines.rm_common import ProbabilisticRewardMachine
+from tcdmarl.tcrl.utils import sparse_rm_to_prm
+
 
 class CentralizedAgent:
     """
@@ -45,7 +48,7 @@ class CentralizedAgent:
         self.rm = SparseRewardMachine(self.rm_file)
         self.u = self.rm.get_initial_state()
 
-        N = num_states  # Number of states in the gridworld
+        N = self.num_states  # Number of states in the gridworld
 
         # Create a list of the dimensions of the centralized q-function
         # E.g. for a 2 agent team, q should have dimensions SxSxUxAxA
@@ -60,6 +63,34 @@ class CentralizedAgent:
         self.total_local_reward = 0
         self.is_task_complete = 0
 
+        # PRMs x TL-CDs
+        self._use_prm: bool = False
+        self.prm: ProbabilisticRewardMachine = sparse_rm_to_prm(self.rm)
+
+    def use_prm(self, value: bool) -> "CentralizedAgent":
+        if not value:
+            return self
+
+        self.u = self.prm.get_initial_state()
+
+        N = self.num_states  # Number of states in the gridworld
+
+        # Create a list of the dimensions of the centralized q-function
+        # E.g. for a 2 agent team, q should have dimensions SxSxUxAxA
+        q_shape = []
+        for i in range(self.num_agents):
+            q_shape.append(N)
+        q_shape.append(len(self.prm.all_states))
+        for i in range(self.num_agents):
+            q_shape.append(len(self.actions[i]))
+
+        self.q = np.zeros(q_shape)
+        self.total_local_reward = 0
+        self.is_task_complete = 0
+
+        self._use_prm = True
+        return self
+
     def reset_state(self):
         """
         Reset the agent to the initial state of the environm ent.
@@ -70,7 +101,10 @@ class CentralizedAgent:
         """
         Reset the state of the reward machine to the initial state and reset task status.
         """
-        self.u = self.rm.get_initial_state()
+        if not self._use_prm:
+            self.u = self.rm.get_initial_state()
+        else:
+            self.u = self.prm.get_initial_state()
         self.is_task_complete = 0
 
     def get_next_action(self, epsilon, learning_params):
@@ -149,7 +183,10 @@ class CentralizedAgent:
 
         u_start = self.u
         for e in label:
-            u2 = self.rm.get_next_state(self.u, e)
+            if not self._use_prm:
+                u2 = self.rm.get_next_state(self.u, e)
+            else:
+                u2 = self.prm.get_next_state(self.u, e)
             self.u = u2
 
         self.total_local_reward += reward
@@ -162,9 +199,14 @@ class CentralizedAgent:
         # Moving to the next state
         self.s = s_new
 
-        if self.rm.is_terminal_state(self.u):
-            # Completed task. Set flag.
-            self.is_task_complete = 1
+        if not self._use_prm:
+            if self.rm.is_terminal_state(self.u):
+                # Completed task. Set flag.
+                self.is_task_complete = 1
+        else:
+            if self.prm.is_terminal_state(self.u):
+                # Completed task. Set flag.
+                self.is_task_complete = 1
 
     def update_q_function(self, s, s_new, u, u_new, a, reward, learning_params):
         """

@@ -1,21 +1,13 @@
-import copy
 import itertools
-import math
-from typing import Tuple
 
-import IPython
 import numpy as np
 from typing_extensions import override
 
-from consts import *
-from .regex_compiler import (
-    CompileStateNFA,
-    NodeCreator,
-    generate_inputs,
-    nfa_complement,
-    nfa_union,
-)
-from util import *
+from tcdmarl.tcrl.consts import *
+from tcdmarl.tcrl.regex.regex_compiler import (CompileStateNFA, NodeCreator,
+                                               generate_inputs, nfa_complement,
+                                               nfa_union)
+from tcdmarl.tcrl.util import *
 
 
 def shuffle(xs: list):

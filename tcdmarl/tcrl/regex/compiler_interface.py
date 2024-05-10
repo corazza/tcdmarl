@@ -1,11 +1,9 @@
 from typing import Tuple
-import IPython
 
-from reward_machines.rm_common import RewardMachine
-from .regex_ast import RENode, NodeCreator
-from .regex_compiler import CompileStateNFA, CompileStateDFA, to_dfa
-from . import regex_parser
-from . import regex_lexer
+from tcdmarl.tcrl.regex import regex_lexer, regex_parser
+from tcdmarl.tcrl.regex.regex_ast import NodeCreator, RENode
+from tcdmarl.tcrl.regex.regex_compiler import CompileStateDFA, CompileStateNFA, to_dfa
+from tcdmarl.tcrl.reward_machines.rm_common import RewardMachine
 
 
 def lex(src: str) -> list[regex_parser.Token]:

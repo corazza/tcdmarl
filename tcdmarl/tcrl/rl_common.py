@@ -1,9 +1,9 @@
-from datetime import datetime
 import csv
 import os
-import IPython
-from matplotlib import pyplot as plt
+from datetime import datetime
+
 import numpy as np
+from matplotlib import pyplot as plt
 
 
 class TrainingResults:
@@ -33,12 +33,9 @@ def average_results(results_list: list[TrainingResults]) -> TrainingResults:
 
     for i in range(result_length):
         avg_time = sum(result.times[i] for result in results_list) / num_results
-        try:
-            avg_reward_total = (
-                sum(result.reward_totals[i] for result in results_list) / num_results
-            )
-        except:
-            IPython.embed()
+        avg_reward_total = (
+            sum(result.reward_totals[i] for result in results_list) / num_results
+        )
         avg_rs_total = sum(result.rs_totals[i] for result in results_list) / num_results
 
         avg_times.append(avg_time)

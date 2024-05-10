@@ -1,8 +1,13 @@
-from reward_machines.rm_builder import ProbabilisticRMBuilder
+"""
+Concrete RM definitions.
+"""
+
+from tcdmarl.tcrl.reward_machines.rm_builder import ProbabilisticRMBuilder
+from tcdmarl.tcrl.reward_machines.rm_common import ProbabilisticRewardMachine
 
 
-def rm_paper_coffe_drink_office():
-    builder = ProbabilisticRMBuilder({"coffee", "drink", "office"})
+def rm_paper_coffe_drink_office() -> ProbabilisticRewardMachine:
+    builder = ProbabilisticRMBuilder(frozenset({"coffee", "drink", "office"}))
     builder.t(0, "!coffee & !drink", 0, prob=1, output=0)
 
     builder.t(0, "coffee & !drink", 1, prob=0.9, output=0)

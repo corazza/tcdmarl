@@ -1,15 +1,18 @@
-from tqdm import tqdm
-from typing import Iterable, Sequence, Tuple
-from abc import ABC, abstractmethod
-import numpy as np
-import gym
-from gym import spaces
-import IPython
-from regex.regex_compiler import generate_inputs
-import copy
+"""
+Defines label-based reward machines and probabilistic reward machines.
+"""
 
-import rl_agents.reward_shaping_q_learning
-from rl_common import RunConfig
+import copy
+from abc import ABC, abstractmethod
+from typing import Iterable, List, Set, Tuple
+
+import gym
+import numpy as np
+from gym import spaces
+from tqdm import tqdm
+
+from tcdmarl.tcrl.regex.regex_compiler import generate_inputs
+from tcdmarl.tcrl.rl_common import RunConfig
 
 
 class RewardMachine(ABC):
@@ -61,9 +64,9 @@ class RewardMachine(ABC):
         states: bool = False,
     ) -> list[int]:
         """Used for demos/testing"""
-        rs = []
+        rs: List[float] = []
         for input_symbol in input_symbols:
-            current_state, r, done = self.transition(current_state, input_symbol)
+            current_state, r, _done = self.transition(current_state, input_symbol)
             if not states:
                 rs.append(r)
             else:
@@ -176,9 +179,7 @@ class ProbabilisticRewardMachine(RewardMachine):
                 prob_sum: float = 0.0
                 for next_state in self.transitions[state][input_symbol]:
                     prob_sum += self.transitions[state][input_symbol][next_state][0]
-                if not abs(prob_sum - 1) < 1e-3:
-                    print("probability sum not 1", prob_sum)
-                    IPython.embed()
+                assert abs(prob_sum - 1) < 1e-3
 
     def negate(self) -> "ProbabilisticRewardMachine":
         transitions = copy.deepcopy(self.transitions)
@@ -190,6 +191,30 @@ class ProbabilisticRewardMachine(RewardMachine):
         negated.transitions = transitions
         return negated
 
+    ### BEGIN CYRUS INTERFACE
+
+    def get_reward(self, u1: int, u2: int) -> int:
+        if self.is_terminal_state(u1):
+            return 0
+        for input_symbol in self.transitions[u1]:
+            if u2 in self.transitions[u1][input_symbol]:
+                return int(self.transitions[u1][input_symbol][u2][1])
+        raise ValueError(f"Transition from {u1} to {u2} not found")
+
+    def get_next_state(self, u: int, event: str) -> int:
+        if self.is_terminal_state(u):
+            return u
+        (u2, _r, _d) = self.transition(u, frozenset({event}))
+        return u2
+
+    def is_terminal_state(self, u: int) -> bool:
+        return u in self.terminal_states
+
+    def get_initial_state(self) -> int:
+        return 0
+
+    ### END CYRUS INTERFACE
+
     def transition(
         self, current_state: int, input_symbol: frozenset[str]
     ) -> Tuple[int, int, bool]:
@@ -197,8 +222,6 @@ class ProbabilisticRewardMachine(RewardMachine):
         if current_state not in self.transitions:
             assert current_state in self.terminal_states
             return (current_state, 0, False)
-        if not input_symbol in self.transitions[current_state]:
-            IPython.embed()
         assert input_symbol in self.transitions[current_state]
         # if input_symbol not in self.transitions[current_state]:
         #     return (current_state, 0, False)
@@ -216,8 +239,8 @@ class ProbabilisticRewardMachine(RewardMachine):
 
         x: float = np.random.random()
 
-        for i in range(len(probs)):
-            if x <= probs[i]:
+        for i, probs_i in enumerate(probs):
+            if x <= probs_i:
                 next_state = states[i]
                 next_reward = rewards[i]
                 # TODO abstract away
@@ -299,8 +322,8 @@ def prm_causal_product(
     appears: frozenset[str] = prm.appears.union(dfa.appears)
     pair_to_self_state_map: dict[tuple[int, int], int] = dict()
     self_to_pair_state_map: dict[int, tuple[int, int]] = dict()
-    nonterminal_states = set()
-    terminal_states = set()
+    nonterminal_states: Set[int] = set()
+    terminal_states: Set[int] = set()
     transitions: dict[int, dict[frozenset[str], dict[int, Tuple[float, int]]]] = dict()
 
     state_counter: int = 0
@@ -438,7 +461,9 @@ class RewardShapingEnv(gym.Env):
         return self.state, reward, terminated, truncated, {}
 
 
-def get_rs_potential(rm: RewardMachine, config: RunConfig) -> list[float]:
+def get_rs_potential(
+    rm: RewardMachine, config: RunConfig
+) -> Tuple[list[float], list[dict[str, float]]]:
     env = RewardShapingEnv(rm, config.per_episode_steps)
     Q = rl_agents.reward_shaping_q_learning.learn(
         env=env,
@@ -461,7 +486,7 @@ def get_rs_potential(rm: RewardMachine, config: RunConfig) -> list[float]:
 
 def get_rs_potential_new(
     rm: ProbabilisticRewardMachine, config: RunConfig
-) -> list[float]:
+) -> Tuple[list[float], list[dict[str, float]]]:
     assert not rm.alternative_rs and not rm.do_reward_shaping
 
     action_labels: list[frozenset[str]] = list(generate_inputs(rm.appears))

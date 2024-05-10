@@ -1,25 +1,23 @@
 import sys
 
-import rl_agents.qrm
-import rl_agents.qrm_lookahead
-from consts import SEED
-from experiment_definitions import MAP_EXPERIMENTS
-from maps.map_env import MapEnv
-from reward_machines.rm_common import (
+from tcdmarl.tcrl.consts import SEED
+from tcdmarl.tcrl.experiment_definitions import MAP_EXPERIMENTS
+from tcdmarl.tcrl.maps.map_env import MapEnv
+from tcdmarl.tcrl.reward_machines.rm_common import (
     CausalDFA,
     ProbabilisticRewardMachine,
     get_rs_potential_new,
     prm_causal_product,
 )
-from reward_machines.rm_env import RMEnvWrapper
-from rl_common import (
+from tcdmarl.tcrl.reward_machines.rm_env import RMEnvWrapper
+from tcdmarl.tcrl.rl_common import (
     PrintDisplayer,
     RunConfig,
     TrainingResults,
     average_results,
     display_and_save_data,
 )
-from util import set_all_seeds
+from tcdmarl.tcrl.util import set_all_seeds
 
 
 def run_experiment(experiment: dict, seed: int):

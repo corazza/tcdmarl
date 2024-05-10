@@ -90,7 +90,7 @@ def run_qlearning_task(
                 centralized_agent.s_i,
                 centralized_agent.num_states,
                 centralized_agent.actions,
-            )
+            ).use_prm(tester.use_prm)
             centralized_agent_copy.q = (
                 centralized_agent.q
             )  # Pass the q function directly. Note that the q-function will be updated during testing.
@@ -245,7 +245,7 @@ def run_centralized_experiment(
 
         centralized_agent = CentralizedAgent(
             rm_test_file, s_i, testing_env.get_map().get_num_states(), actions
-        )
+        ).use_prm(tester.use_prm)
 
         num_episodes = 0
 

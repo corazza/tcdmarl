@@ -1,9 +1,7 @@
-import IPython
 from pathlib import Path
 from typing import Iterable
 
 import numpy as np
-
 from consts import DEFAULT_LABELS_PATH, DEFAULT_MAP_PATH
 from maps.maps_common import *
 

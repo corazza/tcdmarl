@@ -9,6 +9,8 @@ from tcdmarl.consts import SYNCHRONIZATION_THRESH
 from tcdmarl.Environments.common import STR_TO_ACTION, DecentralizedEnv, RoutingMap
 from tcdmarl.reward_machines.sparse_reward_machine import SparseRewardMachine
 from tcdmarl.routing_config import routing_config
+from tcdmarl.tcrl.reward_machines.rm_common import ProbabilisticRewardMachine
+from tcdmarl.tcrl.utils import sparse_rm_to_prm
 
 
 class RoutingEnv(DecentralizedEnv):  # TODO rename to DecentralizedRoutingEnv
@@ -42,6 +44,17 @@ class RoutingEnv(DecentralizedEnv):  # TODO rename to DecentralizedRoutingEnv
         self.u = self.reward_machine.get_initial_state()
         self.last_action = -1  # Initialize last action to garbage value
 
+        # PRMs x TL-CDs
+        self._use_prm: bool = False
+        self.prm: ProbabilisticRewardMachine = sparse_rm_to_prm(self.reward_machine)
+
+    def use_prm(self, value: bool) -> "RoutingEnv":
+        if not value:
+            return self
+        self.u = self.prm.get_initial_state()
+        self._use_prm = True
+        return self
+
     def environment_step(self, s: int, a: int) -> Tuple[int, List[str], int]:
         """
         Execute action a from state s.
@@ -73,8 +86,13 @@ class RoutingEnv(DecentralizedEnv):  # TODO rename to DecentralizedRoutingEnv
 
         for e in l:
             # Get the new reward machine state and the reward of this step
-            u2 = self.reward_machine.get_next_state(self.u, e)
-            r = r + self.reward_machine.get_reward(self.u, u2)
+            if not self._use_prm:
+                u2 = self.reward_machine.get_next_state(self.u, e)
+                r = r + self.reward_machine.get_reward(self.u, u2)
+            else:
+                u2 = self.prm.get_next_state(self.u, e)
+                r = r + self.prm.get_reward(self.u, u2)
+
             # Update the reward machine state
             self.u = u2
 

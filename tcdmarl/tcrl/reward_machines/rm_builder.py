@@ -1,10 +1,13 @@
-import IPython
-from abc import ABC, abstractmethod
-from typing import Iterator, Optional, Tuple
-from regex.regex_compiler import CompileStateDFA, DFANode, generate_inputs
+"""
+Utilities for creating reward machines.
+"""
 
-from regex.regex_parser import parse
-from reward_machines.rm_common import (
+from abc import ABC, abstractmethod
+from typing import Iterator, Tuple
+
+from tcdmarl.tcrl.regex.regex_compiler import CompileStateDFA, DFANode, generate_inputs
+from tcdmarl.tcrl.regex.regex_parser import parse
+from tcdmarl.tcrl.reward_machines.rm_common import (
     CausalDFA,
     DeterministicRewardMachine,
     ProbabilisticRewardMachine,

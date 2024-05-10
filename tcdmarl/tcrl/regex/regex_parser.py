@@ -1,7 +1,7 @@
 import more_itertools
 
-from .regex_ast import *
-from .regex_lexer import *
+from tcdmarl.tcrl.regex.regex_ast import *
+from tcdmarl.tcrl.regex.regex_lexer import *
 
 # expression -> term
 # expression -> term | expression

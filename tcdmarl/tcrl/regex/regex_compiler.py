@@ -1,8 +1,10 @@
+"""
+Compiles regexes to NFAs and DFAs.
+"""
+
 import copy
 import itertools
-from typing import Iterable, Tuple
-
-import IPython
+from typing import Iterable
 
 
 class NFANode:

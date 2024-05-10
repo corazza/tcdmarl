@@ -1,9 +1,8 @@
 import gym
-import IPython
 import numpy as np
 from gym import spaces
 
-from reward_machines.rm_common import RewardMachine, RewardMachineRunner
+from tcdmarl.tcrl.reward_machines.rm_common import RewardMachine, RewardMachineRunner
 
 
 class RMEnvWrapper(gym.Wrapper):

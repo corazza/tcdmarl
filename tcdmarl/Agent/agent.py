@@ -11,6 +11,8 @@ from numpy import float64, int32
 from numpy.typing import NDArray
 
 from tcdmarl.reward_machines.sparse_reward_machine import SparseRewardMachine
+from tcdmarl.tcrl.reward_machines.rm_common import ProbabilisticRewardMachine
+from tcdmarl.tcrl.utils import sparse_rm_to_prm
 from tcdmarl.tester.learning_params import LearningParameters
 
 
@@ -61,10 +63,30 @@ class Agent:
         self.local_event_set: Set[str] = self.rm.get_events()
 
         self.q: NDArray[float64] = np.zeros(
-            [num_states, len(self.rm.all_states), len(self.actions)]
+            [self.num_states, len(self.rm.all_states), len(self.actions)]
         )
         self.total_local_reward = 0
         self.is_task_complete = 0
+
+        # PRMs x TL-CDs
+        self._use_prm: bool = False
+        self.prm: ProbabilisticRewardMachine = sparse_rm_to_prm(self.rm)
+
+    def use_prm(self, value: bool) -> "Agent":
+        if not value:
+            return self
+
+        self.u: int = self.prm.get_initial_state()
+        self.local_event_set: Set[str] = self.rm.get_events()
+
+        self.q: NDArray[float64] = np.zeros(
+            [self.num_states, len(self.prm.all_states), len(self.actions)]
+        )
+        self.total_local_reward = 0
+        self.is_task_complete = 0
+
+        self._use_prm = True
+        return self
 
     def reset_state(self):
         """
@@ -76,7 +98,10 @@ class Agent:
         """
         Reset the state of the reward machine to the initial state and reset task status.
         """
-        self.u = self.rm.get_initial_state()
+        if not self._use_prm:
+            self.u = self.rm.get_initial_state()
+        else:
+            self.u = self.prm.get_initial_state()
         self.is_task_complete = 0
 
     def is_local_event_available(self, label: List[str]) -> bool:
@@ -173,7 +198,10 @@ class Agent:
 
         # Update the agent's RM
         for event in label:
-            u2 = self.rm.get_next_state(self.u, event)
+            if not self._use_prm:
+                u2 = self.rm.get_next_state(self.u, event)
+            else:
+                u2 = self.prm.get_next_state(self.u, event)
             self.u = u2
 
         self.total_local_reward += reward
@@ -186,9 +214,14 @@ class Agent:
         # Moving to the next state
         self.s = s_new
 
-        if self.rm.is_terminal_state(self.u):
-            # Completed task. Set flag.
-            self.is_task_complete = 1
+        if not self._use_prm:
+            if self.rm.is_terminal_state(self.u):
+                # Completed task. Set flag.
+                self.is_task_complete = 1
+        else:
+            if self.prm.is_terminal_state(self.u):
+                # Completed task. Set flag.
+                self.is_task_complete = 1
 
     def update_q_function(
         self,

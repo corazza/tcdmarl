@@ -51,7 +51,9 @@ def run_qlearning_task(
         training_environments: List[RoutingEnv] = []
         for i in range(num_agents):
             training_environments.append(
-                RoutingEnv(agent_list[i].rm_file, i, tester.env_settings)
+                RoutingEnv(agent_list[i].rm_file, i, tester.env_settings).use_prm(
+                    tester.use_prm
+                )
             )
     else:
         raise ValueError('experiment should be one of: "routing"')
@@ -106,7 +108,9 @@ def run_qlearning_task(
                 actions = agent_list[i].actions
                 agent_id = agent_list[i].agent_id
                 num_states = agent_list[i].num_states
-                agent_copy = Agent(rm_file, s_i, num_states, actions, agent_id)
+                agent_copy = Agent(rm_file, s_i, num_states, actions, agent_id).use_prm(
+                    tester.use_prm
+                )
                 # Pass only the q-function by reference so that the testing updates the original agent's q-function.
                 agent_copy.q = agent_list[i].q
 
@@ -312,7 +316,9 @@ def run_multi_agent_experiment(
             actions = testing_env.get_actions(i)
             s_i = testing_env.get_initial_state(i)
             agent_list.append(
-                Agent(rm_learning_file_list[i], s_i, num_states, actions, i)
+                Agent(rm_learning_file_list[i], s_i, num_states, actions, i).use_prm(
+                    tester.use_prm
+                )
             )
 
         num_episodes = 0

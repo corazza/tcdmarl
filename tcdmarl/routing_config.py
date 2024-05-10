@@ -130,4 +130,5 @@ def routing_config(num_times: int) -> Tester:
         rm_learning_file_list=local_rm_files,
         env_settings=env_settings,
         experiment="routing",
+        use_prm=True,
     )
