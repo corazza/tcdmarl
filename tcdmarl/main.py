@@ -1,3 +1,7 @@
+"""
+Run the experiment specified by the user.
+"""
+
 import os
 import pickle
 from datetime import datetime
@@ -19,6 +23,9 @@ from tcdmarl.routing_config import routing_config
     help='The experiment to run. Options: "routing", "centralized_routing"',
 )
 def main(experiment: str):
+    """
+    Run the experiment specified by the user.
+    """
     assert experiment in ["routing", "centralized_routing"]
 
     if experiment == "routing":
@@ -41,6 +48,8 @@ def main(experiment: str):
             show_print=True,
         )
 
+    # TODO remake this
+
     # Save the results
     parent_dir = os.path.abspath(os.path.join(os.getcwd(), os.pardir))
 
@@ -54,8 +63,8 @@ def main(experiment: str):
         os.mkdir(experiment_data_path)
 
     now = datetime.now()
-    save_file_str = r"\{}_".format(now.strftime("%Y-%m-%d_%H-%M-%S"))
-    save_file_str = save_file_str + experiment + ".p"
+    date_time_str: str = now.strftime("%Y-%m-%d_%H-%M-%S")
+    save_file_str = f"{date_time_str}_{experiment}.p"
     save_file = open(experiment_data_path + save_file_str, "wb")
     pickle.dump(tester, save_file)
 

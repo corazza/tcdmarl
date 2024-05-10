@@ -48,8 +48,9 @@ class Tester:
         self.current_step = 0
 
         # Store the results here
-        self.results = {}
-        self.steps = []
+        self.results: Dict[Any, Any] = {}
+        self.steps: List[Any] = []
+        self.agent_list = []
 
     # Methods to keep track of trainint/testing progress
     def restart(self):
@@ -64,5 +65,5 @@ class Tester:
     def stop_learning(self):
         return self.total_steps <= self.current_step
 
-    def stop_task(self, step):
+    def stop_task(self, step: int) -> bool:
         return self.min_steps <= step

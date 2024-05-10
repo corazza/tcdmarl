@@ -1,18 +1,23 @@
-import random
-import time
+"""
+Decentralized Q-learning with Projected Reward Machines (DQPRM) experiment.
+"""
+
+from typing import Any, Dict, List, Tuple
 
 import matplotlib.pyplot as plt
 import numpy as np
-from Agent.agent import Agent
-from Environments.rendezvous.gridworld_env import GridWorldEnv
-from Environments.rendezvous.multi_agent_gridworld_env import MultiAgentGridWorldEnv
-from tester.tester import Tester
 
-from tcdmarl.Environments.routing.multi_agent_routing_env import MultiAgentButtonsEnv
+from tcdmarl.Agent.agent import Agent
 from tcdmarl.Environments.routing.routing_env import RoutingEnv
+from tcdmarl.experiments.common import create_centralized_environment
+from tcdmarl.tester.learning_params import LearningParameters
+from tcdmarl.tester.tester import Tester
+from tcdmarl.tester.tester_params import TestingParameters
 
 
-def run_qlearning_task(epsilon, tester, agent_list, show_print=True):
+def run_qlearning_task(
+    epsilon: float, tester: Tester, agent_list: List[Agent], show_print: bool = True
+):
     """
     This code runs one q-learning episode. q-functions, and accumulated reward values of agents
     are updated accordingly. If the appropriate number of steps have elapsed, this function will
@@ -42,73 +47,34 @@ def run_qlearning_task(epsilon, tester, agent_list, show_print=True):
     num_steps = learning_params.max_timesteps_per_task
 
     # Load the appropriate environments for training
-    if tester.experiment == "rendezvous":
-        training_environments = []
+    if tester.experiment == "routing":
+        training_environments: List[RoutingEnv] = []
         for i in range(num_agents):
             training_environments.append(
-                GridWorldEnv(agent_list[i].rm_file, i + 1, tester.env_settings)
+                RoutingEnv(agent_list[i].rm_file, i, tester.env_settings)
             )
-    if tester.experiment == "buttons":
-        training_environments = []
-        for i in range(num_agents):
-            training_environments.append(
-                RoutingEnv(agent_list[i].rm_file, i + 1, tester.env_settings)
-            )
+    else:
+        raise ValueError('experiment should be one of: "routing"')
 
-    ##########################################################################################
-    # Without early termination
-    ##########################################################################################
-    # for t in range(num_steps):
-    #     # Update step count
-    #     tester.add_step()
-
-    #     for i in range(num_agents):
-    #         # Perform a q-learning step.
-    #         if not(agent_list[i].is_task_complete):
-    #             current_u = agent_list[i].u
-    #             s, a = agent_list[i].get_next_action(epsilon, learning_params)
-    #             r, l, s_new = training_environments[i].environment_step(s,a)
-    #             # a = training_environments[i].get_last_action() # due to MDP slip
-    #             agent_list[i].update_agent(s_new, a, r, l, learning_params)
-
-    #             for u in agent_list[i].rm.U:
-    #                 if not (u == current_u) and not (u in agent_list[i].rm.T):
-    #                     l = training_environments[i].get_mdp_label(s, s_new, u)
-    #                     # print('l', l)
-    #                     r = 0
-    #                     u_temp = u
-    #                     u2 = u
-    #                     for e in l:
-    #                         # Get the new reward machine state and the reward of this step
-    #                         u2 = agent_list[i].rm.get_next_state(u_temp, e)
-    #                         r = r + agent_list[i].rm.get_reward(u_temp, u2)
-    #                         # Update the reward machine state
-    #                         u_temp = u2
-    #                     agent_list[i].update_q_function(s, s_new, u, u2, a, r, learning_params)
-
-    ##########################################################################################
-    # With early termination
-    ##########################################################################################
     for t in range(num_steps):
         # Update step count
         tester.add_step()
 
         for i in range(num_agents):
             # Perform a q-learning step.
-            if not agent_list[i].is_task_complete:
+            if not (agent_list[i].is_task_complete):
                 current_u = agent_list[i].u
                 s, a = agent_list[i].get_next_action(epsilon, learning_params)
                 r, l, s_new = training_environments[i].environment_step(s, a)
-
-                if "d" in l:
-                    agent_list[i].is_task_complete = True
-                    continue
-
+                # a = training_environments[i].get_last_action() # due to MDP slip
                 agent_list[i].update_agent(s_new, a, r, l, learning_params)
 
-                for u in agent_list[i].rm.U:
-                    if not (u == current_u) and not (u in agent_list[i].rm.T):
+                for u in agent_list[i].rm.all_states:
+                    if not (u == current_u) and not (
+                        u in agent_list[i].rm.terminal_states
+                    ):
                         l = training_environments[i].get_mdp_label(s, s_new, u)
+                        # print('l', l)
                         r = 0
                         u_temp = u
                         u2 = u
@@ -127,10 +93,9 @@ def run_qlearning_task(epsilon, tester, agent_list, show_print=True):
             testing_params.test
             and tester.get_current_step() % testing_params.test_freq == 0
         ):
-            t_init = time.time()
             step = tester.get_current_step()
 
-            agent_list_copy = []
+            agent_list_copy: list[Agent] = []
 
             # Need to create a copy of the agent for testing. If we pass the agent directly
             # mid-episode to the test function, the test will reset the world-state and reward machine
@@ -155,6 +120,7 @@ def run_qlearning_task(epsilon, tester, agent_list, show_print=True):
                 testing_params,
                 show_print=show_print,
             )
+
             # Save the testing reward
             if 0 not in tester.results.keys():
                 tester.results[0] = {}
@@ -196,8 +162,12 @@ def run_qlearning_task(epsilon, tester, agent_list, show_print=True):
 
 
 def run_multi_agent_qlearning_test(
-    agent_list, tester, learning_params, testing_params, show_print=True
-):
+    agent_list: List[Agent],
+    tester: Tester,
+    learning_params: LearningParameters,
+    testing_params: TestingParameters,
+    show_print: bool = True,
+) -> Tuple[int, List[Dict[str, Any]], int]:
     """
     Run a test of the q-learning with reward machine method with the current q-function.
 
@@ -220,20 +190,7 @@ def run_multi_agent_qlearning_test(
         Number of testing steps required to complete the task.
     """
     num_agents = len(agent_list)
-
-    if tester.experiment == "rendezvous":
-        testing_env = MultiAgentGridWorldEnv(
-            tester.rm_test_file, num_agents, tester.env_settings
-        )
-    if tester.experiment == "search_and_rescue":
-        target_region = np.random.choice([0, 1, 2, 3, 4])
-        testing_env = SearchAndRescueEnv(
-            tester.rm_test_file, target_region, tester.env_settings
-        )
-    if tester.experiment == "buttons":
-        testing_env = MultiAgentButtonsEnv(
-            tester.rm_test_file, num_agents, tester.env_settings
-        )
+    testing_env = create_centralized_environment(tester)
 
     for i in range(num_agents):
         agent_list[i].reset_state()
@@ -248,12 +205,12 @@ def run_multi_agent_qlearning_test(
         u_team[i] = agent_list[i].u
     testing_reward = 0
 
-    trajectory = []
+    trajectory: List[Dict[str, Any]] = []
 
     step = 0
 
     # Starting interaction with the environment
-    for t in range(testing_params.num_steps):
+    for _t in range(testing_params.num_steps):
         step = step + 1
 
         # Perform a team step
@@ -266,10 +223,11 @@ def run_multi_agent_qlearning_test(
         # trajectory.append({'s' : np.array(s_team, dtype=int), 'a' : np.array(a_team, dtype=int), 'u_team': np.array(u_team, dtype=int), 'u': int(testing_env.u)})
 
         r, l, s_team_next = testing_env.environment_step(s_team, a_team)
+        # testing_env.show_graphic(s_team_next)
 
         testing_reward = testing_reward + r
 
-        projected_l_dict = {}
+        projected_l_dict: Dict[int, List[Any]] = {}
         for i in range(num_agents):
             # Agent i's projected label is the intersection of l with its local event set
             projected_l_dict[i] = list(set(agent_list[i].local_event_set) & set(l))
@@ -281,8 +239,6 @@ def run_multi_agent_qlearning_test(
             # Enforce synchronization requirement on shared events
             if projected_l_dict[i]:
                 for event in projected_l_dict[i]:
-                    print("event:", event)
-                    print("u: ", testing_env.u)
                     # testing_env.show(s_team)
                     for j in range(num_agents):
                         if (event in set(agent_list[j].local_event_set)) and (
@@ -306,9 +262,7 @@ def run_multi_agent_qlearning_test(
 
     if show_print:
         print(
-            "Reward of {} achieved in {} steps. Current step: {} of {}".format(
-                testing_reward, step, tester.current_step, tester.total_steps
-            )
+            f"Reward of {testing_reward} achieved in {step} steps. Current step: {tester.current_step} of {tester.total_steps}"
         )
 
     return testing_reward, trajectory, step
@@ -335,27 +289,22 @@ def run_multi_agent_experiment(
 
     learning_params = tester.learning_params
 
+    assert num_times > 0
+    agent_list: List[Agent] = []
+
     for t in range(num_times):
         # Reseting default step values
         tester.restart()
 
-        rm_test_file = tester.rm_test_file
         rm_learning_file_list = tester.rm_learning_file_list
 
         # Verify that the number of local reward machines matches the number of agents in the experiment.
-        assertion_string = "Number of specified local reward machines must match specified number of agents."
-        assert len(tester.rm_learning_file_list) == num_agents, assertion_string
+        assert (
+            len(tester.rm_learning_file_list) == num_agents
+        ), "Number of specified local reward machines must match specified number of agents."
 
-        if tester.experiment == "rendezvous":
-            testing_env = MultiAgentGridWorldEnv(
-                tester.rm_test_file, num_agents, tester.env_settings
-            )
-            num_states = testing_env.num_states
-        if tester.experiment == "buttons":
-            testing_env = MultiAgentButtonsEnv(
-                tester.rm_test_file, num_agents, tester.env_settings
-            )
-            num_states = testing_env.num_states
+        testing_env = create_centralized_environment(tester)
+        num_states = testing_env.get_map().get_num_states()
 
         # Create the a list of agents for this experiment
         agent_list = []
@@ -367,7 +316,6 @@ def run_multi_agent_experiment(
             )
 
         num_episodes = 0
-        step = 0
 
         # Task loop
         epsilon = learning_params.initial_epsilon
@@ -387,21 +335,21 @@ def run_multi_agent_experiment(
     plot_multi_agent_results(tester, num_agents)
 
 
-def plot_multi_agent_results(tester, num_agents):
+def plot_multi_agent_results(tester: Tester, _num_agents: int):
     """
     Plot the results stored in tester.results for each of the agents.
     """
 
-    prc_25 = list()
-    prc_50 = list()
-    prc_75 = list()
+    prc_25: List[int] = list()
+    prc_50: List[int] = list()
+    prc_75: List[int] = list()
 
     # Buffers for plots
-    current_step = list()
-    current_25 = list()
-    current_50 = list()
-    current_75 = list()
-    steps = list()
+    current_step: List[int] = list()
+    current_25: List[float] = list()
+    current_50: List[float] = list()
+    current_75: List[float] = list()
+    steps: List[int] = list()
 
     plot_dict = tester.results["testing_steps"]
 

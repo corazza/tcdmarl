@@ -1,8 +1,12 @@
+import os
+import random
+import time
+
+import matplotlib.pyplot as plt
+import numpy as np
 from reward_machines.sparse_reward_machine import SparseRewardMachine
 from tester.tester import Tester
-import numpy as np
-import random, time, os
-import matplotlib.pyplot as plt
+
 
 class CentralizedAgent:
     """
@@ -11,11 +15,12 @@ class CentralizedAgent:
     which are updated across training episodes.
     The agent also has a representation of its own reward machine, which it uses
     for learning, and of its state in the world/reward machine.
-    
+
     Note: Users of this class must manually reset the world state and the reward machine
-    state when starting a new episode by calling self.initialize_world() and 
+    state when starting a new episode by calling self.initialize_world() and
     self.initialize_reward_machine().
     """
+
     def __init__(self, rm_file, s_i, num_states, actions):
         """
         Initialize agent object.
@@ -40,17 +45,17 @@ class CentralizedAgent:
         self.rm = SparseRewardMachine(self.rm_file)
         self.u = self.rm.get_initial_state()
 
-        N = num_states # Number of states in the gridworld
+        N = num_states  # Number of states in the gridworld
 
         # Create a list of the dimensions of the centralized q-function
         # E.g. for a 2 agent team, q should have dimensions SxSxUxAxA
         q_shape = []
         for i in range(self.num_agents):
             q_shape.append(N)
-        q_shape.append(len(self.rm.U))
+        q_shape.append(len(self.rm.all_states))
         for i in range(self.num_agents):
             q_shape.append(len(self.actions[i]))
-        
+
         self.q = np.zeros(q_shape)
         self.total_local_reward = 0
         self.is_task_complete = 0
@@ -80,7 +85,7 @@ class CentralizedAgent:
             a[i] represents the action taken by agent i
         """
 
-        T = learning_params.T
+        t_param = learning_params.t_param
 
         if random.random() < epsilon:
             # With probability epsilon, randomly select an action for each agent.
@@ -88,17 +93,19 @@ class CentralizedAgent:
             for i in range(self.num_agents):
                 a_selected[i] = random.choice(self.actions[i])
         else:
-            partial_index = [] # Don't include action indexes. As a result, in pr_sum, we are summing over actions.
+            partial_index = (
+                []
+            )  # Don't include action indexes. As a result, in pr_sum, we are summing over actions.
             for i in range(self.num_agents):
                 partial_index.append(self.s[i])
             partial_index.append(self.u)
             partial_index = tuple(partial_index)
 
             # Sum over all possible actions for fixed team state and reward machine state.
-            pr_sum = np.sum(np.exp(self.q[partial_index] * T))
+            pr_sum = np.sum(np.exp(self.q[partial_index] * t_param))
 
             # pr[i] is an array representing the probability values that agent i will take various actions.
-            pr = np.exp(self.q[partial_index] * T)/pr_sum
+            pr = np.exp(self.q[partial_index] * t_param) / pr_sum
 
             shp = pr.shape
             pr = pr.flatten()
@@ -106,11 +113,11 @@ class CentralizedAgent:
             pr_select = np.zeros([len(pr) + 1, 1])
             pr_select[0] = 0
             for i in range(len(pr)):
-                pr_select[i+1] = pr_select[i] + pr[i]
+                pr_select[i + 1] = pr_select[i] + pr[i]
 
             randn = random.random()
             for i in range(len(pr)):
-                if randn >= pr_select[i] and randn <= pr_select[i+1]:
+                if randn >= pr_select[i] and randn <= pr_select[i + 1]:
                     a_selected = np.unravel_index(i, shp)
                     a_selected = np.array(a_selected, dtype=int)
                     break
@@ -119,9 +126,11 @@ class CentralizedAgent:
 
         return self.s, a
 
-    def update_agent(self, s_new, a, reward, label, learning_params, update_q_function=True):
+    def update_agent(
+        self, s_new, a, reward, label, learning_params, update_q_function=True
+    ):
         """
-        Update the agent's state, q-function, and reward machine after 
+        Update the agent's state, q-function, and reward machine after
         interacting with the environment.
 
         Parameters
@@ -142,11 +151,13 @@ class CentralizedAgent:
         for e in label:
             u2 = self.rm.get_next_state(self.u, e)
             self.u = u2
-        
+
         self.total_local_reward += reward
 
         if update_q_function == True:
-            self.update_q_function(self.s, s_new, u_start, self.u, a, reward, learning_params)
+            self.update_q_function(
+                self.s, s_new, u_start, self.u, a, reward, learning_params
+            )
 
         # Moving to the next state
         self.s = s_new
@@ -187,11 +198,13 @@ class CentralizedAgent:
         partial_ind = tuple(partial_ind)
 
         # Bellman update
-        self.q[ind] = (1-alpha)*self.q[ind] + alpha*(reward + gamma*np.amax(self.q[partial_ind]))
+        self.q[ind] = (1 - alpha) * self.q[ind] + alpha * (
+            reward + gamma * np.amax(self.q[partial_ind])
+        )
 
     def get_q_function_index(self, s, u, a):
         """
-        Get the index to be passed into the q-function to reference 
+        Get the index to be passed into the q-function to reference
         the team-state action pair associated with (s,a).
 
         Parameters
@@ -215,5 +228,5 @@ class CentralizedAgent:
         ind.append(u)
         for i in range(self.num_agents):
             ind.append(a[i])
-        
+
         return tuple(ind)

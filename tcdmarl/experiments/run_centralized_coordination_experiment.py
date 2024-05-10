@@ -1,21 +1,21 @@
-import random
 import time
 
 import matplotlib.pyplot as plt
 import numpy as np
-from Agent.centralized_agent import CentralizedAgent
-from Environments.rendezvous.multi_agent_gridworld_env import MultiAgentGridWorldEnv
-from tester.tester import Tester
 
-from tcdmarl.Environments.routing.multi_agent_routing_env import MultiAgentButtonsEnv
+from tcdmarl.Agent.centralized_agent import CentralizedAgent
+from tcdmarl.Environments.routing.multi_agent_routing_env import MultiAgentRoutingEnv
+from tcdmarl.experiments.common import create_centralized_environment
+from tcdmarl.tester.learning_params import LearningParameters
+from tcdmarl.tester.tester import Tester
+from tcdmarl.tester.tester_params import TestingParameters
 
 
 def run_qlearning_task(
-    epsilon,
-    tester,
-    experiment,  # 'centralized_rendezvous' vs. 'centralized_buttons'
-    centralized_agent,
-    show_print=False,
+    epsilon: float,
+    tester: Tester,
+    centralized_agent: CentralizedAgent,
+    show_print: bool = False,
 ):
     """
     This code runs one q-learning episode. q-functions, and accumulated reward values of agents
@@ -37,23 +37,13 @@ def run_qlearning_task(
     learning_params = tester.learning_params
     testing_params = tester.testing_params
 
-    num_agents = centralized_agent.num_agents
-
     centralized_agent.reset_state()
     centralized_agent.initialize_reward_machine()
 
     num_steps = learning_params.max_timesteps_per_task
 
-    if experiment == "centralized_rendezvous":
-        env = MultiAgentGridWorldEnv(
-            tester.rm_test_file, num_agents, tester.env_settings
-        )
-    elif experiment == "centralized_buttons":
-        env = MultiAgentButtonsEnv(tester.rm_test_file, num_agents, tester.env_settings)
+    env = create_centralized_environment(tester)
 
-    ##########################################################################################
-    # Without early termination
-    ##########################################################################################
     for t in range(num_steps):
         # Update step count
         tester.add_step()
@@ -66,8 +56,10 @@ def run_qlearning_task(
             # a = np.copy(env.last_action) # due to MDP slip
             centralized_agent.update_agent(s_new, a, r, l, learning_params)
 
-            for u in centralized_agent.rm.U:
-                if not (u == current_u) and not (u in centralized_agent.rm.T):
+            for u in centralized_agent.rm.all_states:
+                if not (u == current_u) and not (
+                    u in centralized_agent.rm.terminal_states
+                ):
                     l = env.get_mdp_label(s, s_new, u)
                     r = 0
                     u_temp = u
@@ -81,42 +73,6 @@ def run_qlearning_task(
                     centralized_agent.update_q_function(
                         s, s_new, u, u2, a, r, learning_params
                     )
-
-        ##########################################################################################
-        # With early termination
-        ##########################################################################################
-        # for t in range(num_steps):
-        #     # Update step count
-        #     tester.add_step()
-
-        #     # Perform a q-learning step.
-        #     if not (centralized_agent.is_task_complete):
-        #         current_u = centralized_agent.u
-        #         s, a = centralized_agent.get_next_action(epsilon, learning_params)
-        #         r, l, s_new = env.environment_step(s, a)
-        #         # a = np.copy(env.last_action) # due to MDP slip
-
-        #         if 'd' in l:
-        #                 centralized_agent.is_task_complete = True
-        #                 continue
-
-        #         centralized_agent.update_agent(s_new, a, r, l, learning_params)
-
-        #         for u in centralized_agent.rm.U:
-        #             if not (u == current_u) and not (u in centralized_agent.rm.T):
-        #                 l = env.get_mdp_label(s, s_new, u)
-        #                 r = 0
-        #                 u_temp = u
-        #                 u2 = u
-        #                 for e in l:
-        #                     # Get the new reward machine state and the reward of this step
-        #                     u2 = centralized_agent.rm.get_next_state(u_temp, e)
-        #                     r = r + centralized_agent.rm.get_reward(u_temp, u2)
-        #                     # Update the reward machine state
-        #                     u_temp = u2
-        #                 centralized_agent.update_q_function(
-        #                     s, s_new, u, u2, a, r, learning_params
-        #                 )
 
         # If enough steps have elapsed, test and save the performance of the agents.
         if (
@@ -143,7 +99,6 @@ def run_qlearning_task(
             testing_reward, trajectory, testing_steps = run_centralized_qlearning_test(
                 centralized_agent_copy,
                 tester,
-                experiment,
                 learning_params,
                 testing_params,
                 show_print=show_print,
@@ -187,12 +142,11 @@ def run_qlearning_task(
 
 
 def run_centralized_qlearning_test(
-    centralized_agent,
-    tester,
-    experiment,
-    learning_params,
-    testing_params,
-    show_print=True,
+    centralized_agent: CentralizedAgent,
+    tester: Tester,
+    learning_params: LearningParameters,
+    testing_params: TestingParameters,
+    show_print: bool = True,
 ):
     """
     Run a test of the q-learning with reward machine method with the current q-function.
@@ -217,14 +171,7 @@ def run_centralized_qlearning_test(
     """
     num_agents = centralized_agent.num_agents
 
-    if experiment == "centralized_rendezvous":
-        testing_env = MultiAgentGridWorldEnv(
-            tester.rm_test_file, num_agents, tester.env_settings
-        )
-    elif experiment == "centralized_buttons":
-        testing_env = MultiAgentButtonsEnv(
-            tester.rm_test_file, num_agents, tester.env_settings
-        )
+    testing_env = create_centralized_environment(tester)
 
     centralized_agent.reset_state()
     centralized_agent.initialize_reward_machine()
@@ -291,20 +238,13 @@ def run_centralized_experiment(
 
         rm_test_file = tester.rm_test_file
 
-        if tester.experiment == "centralized_routing":
-            testing_env = MultiAgentRoutingEnv(
-                rm_test_file, num_agents, tester.env_settings
-            )
-        elif tester.experiment == "centralized_buttons":
-            testing_env = MultiAgentButtonsEnv(
-                rm_test_file, num_agents, tester.env_settings
-            )
+        testing_env = create_centralized_environment(tester)
 
         s_i = testing_env.get_initial_team_state()
-        actions = testing_env.actions
+        actions = testing_env.get_team_action_array()
 
         centralized_agent = CentralizedAgent(
-            rm_test_file, s_i, testing_env.num_states, actions
+            rm_test_file, s_i, testing_env.get_map().get_num_states(), actions
         )
 
         num_episodes = 0
@@ -318,7 +258,10 @@ def run_centralized_experiment(
             # epsilon = epsilon*0.99
 
             run_qlearning_task(
-                epsilon, tester, experiment, centralized_agent, show_print=show_print
+                epsilon,
+                tester,
+                centralized_agent,
+                show_print=show_print,
             )
 
         # Backing up the results

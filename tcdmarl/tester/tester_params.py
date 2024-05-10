@@ -1,5 +1,14 @@
+"""
+Testing parameters.
+"""
+
+
 class TestingParameters:
-    def __init__(self, test = True, test_freq=1000, num_steps = 100):
+    """
+    Testing parameters.
+    """
+
+    def __init__(self, test: bool = True, test_freq: int = 1000, num_steps: int = 100):
         """Parameters
         -------
         test: bool
@@ -12,4 +21,3 @@ class TestingParameters:
         self.test = test
         self.test_freq = test_freq
         self.num_steps = num_steps
-    

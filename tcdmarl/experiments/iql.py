@@ -7,7 +7,7 @@ from Agent.iqAgent import iqAgent
 from Environments.rendezvous.multi_agent_gridworld_env import MultiAgentGridWorldEnv
 from tester.tester import Tester
 
-from tcdmarl.Environments.routing.multi_agent_routing_env import MultiAgentButtonsEnv
+from tcdmarl.Environments.routing.multi_agent_routing_env import MultiAgentRoutingEnv
 
 
 def run_iql_training(epsilon, tester, agent_list, show_print=True):
@@ -37,7 +37,7 @@ def run_iql_training(epsilon, tester, agent_list, show_print=True):
             tester.rm_test_file, num_agents, tester.env_settings
         )
     if tester.experiment == "buttons":
-        training_env = MultiAgentButtonsEnv(
+        training_env = MultiAgentRoutingEnv(
             tester.rm_test_file, num_agents, tester.env_settings
         )
 
@@ -174,7 +174,7 @@ def run_iql_test(agent_list, tester, learning_params, testing_params, show_print
             tester.rm_test_file, num_agents, tester.env_settings
         )
     if tester.experiment == "buttons":
-        testing_env = MultiAgentButtonsEnv(
+        testing_env = MultiAgentRoutingEnv(
             tester.rm_test_file, num_agents, tester.env_settings
         )
 
@@ -265,7 +265,7 @@ def run_iql_experiment(tester, num_agents, num_times, show_print=True):
                 rm_test_file, num_agents, tester.env_settings
             )
         if tester.experiment == "buttons":
-            testing_env = MultiAgentButtonsEnv(
+            testing_env = MultiAgentRoutingEnv(
                 rm_test_file, num_agents, tester.env_settings
             )
 
