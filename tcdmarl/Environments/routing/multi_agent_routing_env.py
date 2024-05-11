@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import matplotlib.colors as mcolors
 import matplotlib.pyplot as plt
@@ -7,11 +7,11 @@ import numpy as np
 from numpy import int32
 from numpy.typing import NDArray
 
-from tcdmarl.Environments.common import (STR_TO_ACTION, CentralizedEnv,
-                                         RoutingMap)
+from tcdmarl.Environments.common import STR_TO_ACTION, CentralizedEnv, RoutingMap
 from tcdmarl.reward_machines.sparse_reward_machine import SparseRewardMachine
 from tcdmarl.routing_config import routing_config
-from tcdmarl.tcrl.reward_machines.rm_common import ProbabilisticRewardMachine
+from tcdmarl.shared_mem import PRM_TLCD_MAP
+from tcdmarl.tcrl.reward_machines.rm_common import CausalDFA, ProbabilisticRewardMachine
 from tcdmarl.tcrl.utils import sparse_rm_to_prm
 
 
@@ -22,7 +22,9 @@ class MultiAgentRoutingEnv(CentralizedEnv):  # TODO rename to CentralizedRouting
     Case study 1: routing environment with two agents and a switch door.
     """
 
-    def __init__(self, rm_file: Path, env_settings: Dict[str, Any]):
+    def __init__(
+        self, rm_file: Path, env_settings: Dict[str, Any], tlcd: Optional[CausalDFA]
+    ):
         """
         Initialize environment.
 
@@ -56,12 +58,26 @@ class MultiAgentRoutingEnv(CentralizedEnv):  # TODO rename to CentralizedRouting
         )  # Initialize last action with garbage values
 
         # PRMs x TL-CDs
+        self._saved_rm_path: Path = rm_file
+        self.tlcd = tlcd
         self._use_prm: bool = False
-        self.prm: ProbabilisticRewardMachine = sparse_rm_to_prm(self.reward_machine)
+        self.prm: ProbabilisticRewardMachine
 
     def use_prm(self, value: bool) -> "MultiAgentRoutingEnv":
         if not value:
             return self
+
+        if self.tlcd is not None:
+            save_path = f"{self._saved_rm_path}_TLCD"
+        else:
+            save_path = f"{self._saved_rm_path}_NO_TLCD"
+
+        if not save_path in PRM_TLCD_MAP:
+            self.prm = sparse_rm_to_prm(self.reward_machine).add_tlcd(self.tlcd)
+            PRM_TLCD_MAP[save_path] = self.prm
+        else:
+            self.prm = PRM_TLCD_MAP[save_path]
+
         self.u = self.prm.get_initial_state()
         self._use_prm = True
         return self
@@ -98,7 +114,7 @@ class MultiAgentRoutingEnv(CentralizedEnv):  # TODO rename to CentralizedRouting
 
         for i in range(self.num_agents):
             last_action: int
-            routing_state = self.map.compute_joint_state(self.u)
+            routing_state = self.map.compute_joint_state(self.get_old_u(self.u))
             s_next[i], last_action = self.map.get_next_state(
                 s[i], a[i], i, routing_state=routing_state
             )
@@ -222,8 +238,10 @@ class MultiAgentRoutingEnv(CentralizedEnv):  # TODO rename to CentralizedRouting
         ) == self.map.env_settings["K2"]:
             l.append("k")
 
-        if (row1, col1) == self.map.env_settings["D"]:
-            l.append("d")
+        if (row1, col1) == self.map.env_settings["F1"]:
+            l.append("f")
+        if (row1, col1) == self.map.env_settings["F2"]:
+            l.append("f")
 
         if (row2, col2) == self.map.env_settings["B2"]:
             l.append("b2")
@@ -262,7 +280,7 @@ class MultiAgentRoutingEnv(CentralizedEnv):  # TODO rename to CentralizedRouting
             options_list.append("w1")
             options_list.append("b1")
             options_list.append("k")
-            options_list.append("d")
+            options_list.append("f")
             options_list.append("g")
 
         if agent_id == agent2:
@@ -270,6 +288,15 @@ class MultiAgentRoutingEnv(CentralizedEnv):  # TODO rename to CentralizedRouting
             options_list.append("b2")
 
         return options_list
+
+    def get_old_u(self, u: int) -> int:
+        if not self._use_prm:
+            return u
+        else:
+            if len(self.prm.state_map_after_product) != 0:
+                return self.prm.state_map_after_product[u]
+            else:
+                return u
 
     def get_avail_options(self, agent_id: int):
         """
@@ -281,7 +308,7 @@ class MultiAgentRoutingEnv(CentralizedEnv):  # TODO rename to CentralizedRouting
         agent2 = 1
 
         avail_options: List[str] = []
-        routing_state = self.map.compute_joint_state(self.u)
+        routing_state = self.map.compute_joint_state(self.get_old_u(self.u))
 
         if agent_id == agent1:
             avail_options.append("w1")
@@ -289,7 +316,7 @@ class MultiAgentRoutingEnv(CentralizedEnv):  # TODO rename to CentralizedRouting
             if routing_state.b1_pressed or routing_state.b2_pressed:
                 avail_options.append("k")  # K1
             if not routing_state.b3_pressed:
-                avail_options.append("d")
+                avail_options.append("f")
             else:
                 avail_options.append("g")
         if agent_id == agent2:
@@ -339,8 +366,10 @@ class MultiAgentRoutingEnv(CentralizedEnv):  # TODO rename to CentralizedRouting
                     completed_options.append("b1")
                 if (row, col) == self.map.env_settings["K1"]:
                     completed_options.append("k")
-                if (row, col) == self.map.env_settings["D"]:
-                    completed_options.append("d")
+                if (row, col) == self.map.env_settings["F1"]:
+                    completed_options.append("f")
+                if (row, col) == self.map.env_settings["F2"]:
+                    completed_options.append("f")
                 if (row, col) == self.map.env_settings["K2"]:
                     completed_options.append("k")
                 if (row, col) == self.map.env_settings["goal_location"]:
@@ -372,7 +401,7 @@ class MultiAgentRoutingEnv(CentralizedEnv):  # TODO rename to CentralizedRouting
         meta_state : int
             Index of the meta-state.
         """
-        routing_state = self.map.compute_joint_state(self.u)
+        routing_state = self.map.compute_joint_state(self.get_old_u(self.u))
         # Convert the Truth values of which buttons have been pushed to an int
         meta_state = int(
             f"{int(routing_state.b1_pressed)}{int(routing_state.b2_pressed)}{int(routing_state.b3_pressed)}{int(routing_state.key_collected)}",
@@ -418,8 +447,9 @@ class MultiAgentRoutingEnv(CentralizedEnv):  # TODO rename to CentralizedRouting
         display[self.map.env_settings["B2"]] = 9
         display[self.map.env_settings["B3"]] = 9
         display[self.map.env_settings["K1"]] = 9
-        display[self.map.env_settings["D"]] = 9
         display[self.map.env_settings["K2"]] = 9
+        display[self.map.env_settings["F1"]] = 9
+        display[self.map.env_settings["F2"]] = 9
         display[self.map.env_settings["goal_location"]] = 9
 
         for loc in self.map.blue_tiles:
@@ -460,7 +490,8 @@ class MultiAgentRoutingEnv(CentralizedEnv):  # TODO rename to CentralizedRouting
             "B2": self.map.env_settings["B2"],
             "B3": self.map.env_settings["B3"],
             "K1": self.map.env_settings["K1"],
-            "D": self.map.env_settings["D"],
+            "F1": self.map.env_settings["F1"],
+            "F2": self.map.env_settings["F2"],
             "K2": self.map.env_settings["K2"],
             "G": self.map.env_settings["goal_location"],
         }

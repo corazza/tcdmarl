@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 from numpy import int32
@@ -9,7 +9,8 @@ from tcdmarl.consts import SYNCHRONIZATION_THRESH
 from tcdmarl.Environments.common import STR_TO_ACTION, DecentralizedEnv, RoutingMap
 from tcdmarl.reward_machines.sparse_reward_machine import SparseRewardMachine
 from tcdmarl.routing_config import routing_config
-from tcdmarl.tcrl.reward_machines.rm_common import ProbabilisticRewardMachine
+from tcdmarl.shared_mem import PRM_TLCD_MAP
+from tcdmarl.tcrl.reward_machines.rm_common import CausalDFA, ProbabilisticRewardMachine
 from tcdmarl.tcrl.utils import sparse_rm_to_prm
 
 
@@ -20,7 +21,13 @@ class RoutingEnv(DecentralizedEnv):  # TODO rename to DecentralizedRoutingEnv
     Case study 1: routing environment with two agents and a switch door.
     """
 
-    def __init__(self, rm_file: Path, agent_id: int, env_settings: Dict[str, Any]):
+    def __init__(
+        self,
+        rm_file: Path,
+        agent_id: int,
+        env_settings: Dict[str, Any],
+        tlcd: Optional[CausalDFA],
+    ):
         """
         Initialize environment.
 
@@ -45,15 +52,38 @@ class RoutingEnv(DecentralizedEnv):  # TODO rename to DecentralizedRoutingEnv
         self.last_action = -1  # Initialize last action to garbage value
 
         # PRMs x TL-CDs
+        self._saved_rm_path: Path = rm_file
+        self.tlcd = tlcd
         self._use_prm: bool = False
-        self.prm: ProbabilisticRewardMachine = sparse_rm_to_prm(self.reward_machine)
+        self.prm: ProbabilisticRewardMachine
 
     def use_prm(self, value: bool) -> "RoutingEnv":
         if not value:
             return self
+
+        if self.tlcd is not None:
+            save_path = f"{self._saved_rm_path}_TLCD"
+        else:
+            save_path = f"{self._saved_rm_path}_NO_TLCD"
+
+        if not save_path in PRM_TLCD_MAP:
+            self.prm = sparse_rm_to_prm(self.reward_machine).add_tlcd(self.tlcd)
+            PRM_TLCD_MAP[save_path] = self.prm
+        else:
+            self.prm = PRM_TLCD_MAP[save_path]
+
         self.u = self.prm.get_initial_state()
         self._use_prm = True
         return self
+
+    def get_old_u(self, u: int) -> int:
+        if not self._use_prm:
+            return u
+        else:
+            if len(self.prm.state_map_after_product) != 0:
+                return self.prm.state_map_after_product[u]
+            else:
+                return u
 
     def environment_step(self, s: int, a: int) -> Tuple[int, List[str], int]:
         """
@@ -75,7 +105,7 @@ class RoutingEnv(DecentralizedEnv):  # TODO rename to DecentralizedRoutingEnv
         s_next : int
             Index of next state.
         """
-        routing_state = self.map.compute_state(self.agent_id, self.u)
+        routing_state = self.map.compute_state(self.agent_id, self.get_old_u(self.u))
         s_next, last_action = self.map.get_next_state(
             s, a, self.agent_id, routing_state
         )
@@ -114,8 +144,10 @@ class RoutingEnv(DecentralizedEnv):  # TODO rename to DecentralizedRoutingEnv
                 col,
             ) == self.map.env_settings["K2"]:
                 l.append("k")
-            if (row, col) == self.map.env_settings["D"]:
-                l.append("d")
+            if (row, col) == self.map.env_settings["F1"]:
+                l.append("f")
+            if (row, col) == self.map.env_settings["F2"]:
+                l.append("f")
             if (row, col) == self.map.env_settings["goal_location"]:
                 l.append("g")
 
@@ -170,8 +202,9 @@ class RoutingEnv(DecentralizedEnv):  # TODO rename to DecentralizedRoutingEnv
         display[self.map.env_settings["B1"]] = 9
         display[self.map.env_settings["B2"]] = 9
         display[self.map.env_settings["K1"]] = 9
-        display[self.map.env_settings["D"]] = 9
         display[self.map.env_settings["K2"]] = 9
+        display[self.map.env_settings["F1"]] = 9
+        display[self.map.env_settings["F2"]] = 9
         display[self.map.env_settings["goal_location"]] = 9
 
         for loc in self.map.blue_tiles:

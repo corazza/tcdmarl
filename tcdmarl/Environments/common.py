@@ -18,6 +18,7 @@ class Map:
         self.number_of_columns = self.env_settings["Nc"]
         self.initial_states: List[int] = self.env_settings["initial_states"]
         self.p = env_settings["p"]
+        self.sinks = self.env_settings["sinks"]
 
         # Set the available actions of all agents. For now all agents have same action set.
         self.actions = np.array(
@@ -65,30 +66,6 @@ class Map:
     def get_num_states(self) -> int:
         return self.num_states
 
-
-class RoutingState:
-    def __init__(
-        self, key_collected: bool, b1_pressed: bool, b2_pressed: bool, b3_pressed: bool
-    ):
-        self.key_collected: bool = key_collected
-        self.b1_pressed: bool = b1_pressed
-        self.b2_pressed: bool = b2_pressed
-        self.b3_pressed: bool = b3_pressed
-
-
-class RoutingMap(Map):
-    """
-    Case study 1: routing environment with two agents and a switch door.
-    """
-
-    def __init__(self, env_settings: Dict[str, Any]):
-        super().__init__(env_settings=env_settings)
-        self.yellow_tiles = self.env_settings["yellow_tiles"]
-        self.green_tiles = self.env_settings["green_tiles"]
-        self.orange_tiles = self.env_settings["orange_tiles"]
-        self.blue_tiles = self.env_settings["blue_tiles"]
-        self.pink_tiles = self.env_settings["pink_tiles"]
-
     def get_state_from_description(self, row: int, col: int) -> int:
         """
         Given a (row, column) index description of gridworld location, return
@@ -129,6 +106,30 @@ class RoutingMap(Map):
 
         return (row, col)
 
+
+class RoutingState:
+    def __init__(
+        self, key_collected: bool, b1_pressed: bool, b2_pressed: bool, b3_pressed: bool
+    ):
+        self.key_collected: bool = key_collected
+        self.b1_pressed: bool = b1_pressed
+        self.b2_pressed: bool = b2_pressed
+        self.b3_pressed: bool = b3_pressed
+
+
+class RoutingMap(Map):
+    """
+    Case study 1: routing environment with two agents and a switch door.
+    """
+
+    def __init__(self, env_settings: Dict[str, Any]):
+        super().__init__(env_settings=env_settings)
+        self.yellow_tiles = self.env_settings["yellow_tiles"]
+        self.green_tiles = self.env_settings["green_tiles"]
+        self.orange_tiles = self.env_settings["orange_tiles"]
+        self.blue_tiles = self.env_settings["blue_tiles"]
+        self.pink_tiles = self.env_settings["pink_tiles"]
+
     def get_next_state(
         self, s: int, a: int, agent_id: int, routing_state: RoutingState
     ) -> Tuple[int, int]:
@@ -154,6 +155,10 @@ class RoutingMap(Map):
         check = random.random()  # TODO get rid of random
 
         row, col = self.get_state_description(s)
+
+        stuck = False
+        if (row, col) in self.sinks:
+            stuck = True
 
         a_: int
         if (check <= slip_p[0]) or (a == Actions.NONE.value):
@@ -211,6 +216,9 @@ class RoutingMap(Map):
             if not routing_state.b3_pressed:
                 if (row, col) in self.pink_tiles:
                     s_next = s
+
+        if stuck:
+            s_next = s
 
         last_action = a_
         return s_next, last_action
@@ -277,6 +285,10 @@ class CentralizedEnv(ABC):
     def environment_step(
         self, s: NDArray[int32], a: NDArray[int32]
     ) -> Tuple[int, List[str], NDArray[int32]]:
+        pass
+
+    @abstractmethod
+    def show_graphic(self, s: NDArray[int32]) -> None:
         pass
 
     @abstractmethod

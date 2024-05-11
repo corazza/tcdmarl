@@ -2,16 +2,18 @@
 Individual agent class for RM-based learning agent.
 """
 
+import copy
 import random
 from pathlib import Path
-from typing import List, Set, Tuple
+from typing import List, Optional, Set, Tuple
 
 import numpy as np
 from numpy import float64, int32
 from numpy.typing import NDArray
 
 from tcdmarl.reward_machines.sparse_reward_machine import SparseRewardMachine
-from tcdmarl.tcrl.reward_machines.rm_common import ProbabilisticRewardMachine
+from tcdmarl.shared_mem import PRM_TLCD_MAP
+from tcdmarl.tcrl.reward_machines.rm_common import CausalDFA, ProbabilisticRewardMachine
 from tcdmarl.tcrl.utils import sparse_rm_to_prm
 from tcdmarl.tester.learning_params import LearningParameters
 
@@ -36,6 +38,7 @@ class Agent:
         num_states: int,
         actions: NDArray[int32],
         agent_id: int,
+        tlcd: Optional[CausalDFA],
     ):
         """
         Initialize agent object.
@@ -60,6 +63,8 @@ class Agent:
 
         self.rm: SparseRewardMachine = SparseRewardMachine(self.rm_file)
         self.u: int = self.rm.get_initial_state()
+        self.all_states: List[int] = self.rm.all_states
+        self.terminal_states: Set[int] = self.rm.terminal_states
         self.local_event_set: Set[str] = self.rm.get_events()
 
         self.q: NDArray[float64] = np.zeros(
@@ -69,15 +74,29 @@ class Agent:
         self.is_task_complete = 0
 
         # PRMs x TL-CDs
+        self._saved_rm_path = self.rm_file
+        self.tlcd = tlcd
         self._use_prm: bool = False
-        self.prm: ProbabilisticRewardMachine = sparse_rm_to_prm(self.rm)
+        self.prm: ProbabilisticRewardMachine
 
     def use_prm(self, value: bool) -> "Agent":
         if not value:
             return self
 
+        if self.tlcd is not None:
+            save_path = f"{self._saved_rm_path}_TLCD"
+        else:
+            save_path = f"{self._saved_rm_path}_NO_TLCD"
+
+        if not save_path in PRM_TLCD_MAP:
+            self.prm = sparse_rm_to_prm(self.rm).add_tlcd(self.tlcd)
+            PRM_TLCD_MAP[save_path] = self.prm
+        else:
+            self.prm = copy.deepcopy(PRM_TLCD_MAP[save_path])
+
         self.u: int = self.prm.get_initial_state()
-        self.local_event_set: Set[str] = self.rm.get_events()
+        self.all_states = list(self.prm.all_states)
+        self.terminal_states = set(self.prm.terminal_states)
 
         self.q: NDArray[float64] = np.zeros(
             [self.num_states, len(self.prm.all_states), len(self.actions)]
@@ -87,6 +106,18 @@ class Agent:
 
         self._use_prm = True
         return self
+
+    def get_next_state(self, u: int, e: str) -> int:
+        if not self._use_prm:
+            return self.rm.get_next_state(u, e)
+        else:
+            return self.prm.get_next_state(u, e)
+
+    def get_reward(self, u1: int, u2: int) -> int:
+        if not self._use_prm:
+            return self.rm.get_reward(u1, u2)
+        else:
+            return self.prm.get_reward(u1, u2)
 
     def reset_state(self):
         """
@@ -108,7 +139,10 @@ class Agent:
         # Only try accessing the first event in label if it exists
         if label:
             event = label[0]
-            return self.rm.is_event_available(self.u, event)
+            if not self._use_prm:
+                return self.rm.is_event_available(self.u, event)
+            else:
+                return self.prm.is_event_available(self.u, event)
         else:
             return False
 

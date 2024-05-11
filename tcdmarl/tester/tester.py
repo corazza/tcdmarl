@@ -1,6 +1,7 @@
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
+from tcdmarl.tcrl.reward_machines.rm_common import CausalDFA
 from tcdmarl.tester.learning_params import LearningParameters
 from tcdmarl.tester.tester_params import TestingParameters
 
@@ -20,6 +21,7 @@ class Tester:
         env_settings: Dict[str, Any],
         experiment: str,
         use_prm: bool,
+        tlcd: Optional[CausalDFA],
     ):
         """
         Parameters
@@ -42,6 +44,7 @@ class Tester:
         self.env_settings = env_settings
         self.experiment = experiment
         self.use_prm = use_prm
+        self.tlcd = tlcd
 
         self.min_steps = min_steps
         self.total_steps = total_steps

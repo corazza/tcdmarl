@@ -4,7 +4,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from tcdmarl.Agent.centralized_agent import CentralizedAgent
-from tcdmarl.Environments.routing.multi_agent_routing_env import MultiAgentRoutingEnv
 from tcdmarl.experiments.common import create_centralized_environment
 from tcdmarl.tester.learning_params import LearningParameters
 from tcdmarl.tester.tester import Tester
@@ -56,9 +55,9 @@ def run_qlearning_task(
             # a = np.copy(env.last_action) # due to MDP slip
             centralized_agent.update_agent(s_new, a, r, l, learning_params)
 
-            for u in centralized_agent.rm.all_states:
+            for u in centralized_agent.all_states:
                 if not (u == current_u) and not (
-                    u in centralized_agent.rm.terminal_states
+                    u in centralized_agent.terminal_states
                 ):
                     l = env.get_mdp_label(s, s_new, u)
                     r = 0
@@ -66,8 +65,8 @@ def run_qlearning_task(
                     u2 = u
                     for e in l:
                         # Get the new reward machine state and the reward of this step
-                        u2 = centralized_agent.rm.get_next_state(u_temp, e)
-                        r = r + centralized_agent.rm.get_reward(u_temp, u2)
+                        u2 = centralized_agent.get_next_state(u_temp, e)
+                        r = r + centralized_agent.get_reward(u_temp, u2)
                         # Update the reward machine state
                         u_temp = u2
                     centralized_agent.update_q_function(

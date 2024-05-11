@@ -102,11 +102,14 @@ class SparseRewardMachine:
         # setting the DFA
         self.u0 = eval(lines[0])
         # adding transitions
-        for e in lines[1:]:
+        for e in lines[1:-1]:
             self._add_transition(*eval(e))
             self.events.add(
                 eval(e)[2]
             )  # By convention, the event is in the spot indexed by 2
+        # expand event set by the last line
+        for e in eval(lines[-1]):
+            self.events.add(e)
         # adding terminal states
         for u1 in self.all_states:
             if self._is_terminal(u1):

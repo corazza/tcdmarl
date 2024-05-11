@@ -4,7 +4,7 @@ Defines label-based reward machines and probabilistic reward machines.
 
 import copy
 from abc import ABC, abstractmethod
-from typing import Iterable, List, Set, Tuple
+from typing import Dict, Iterable, List, Optional, Set, Tuple
 
 import gym
 import numpy as np
@@ -169,6 +169,8 @@ class ProbabilisticRewardMachine(RewardMachine):
     ):
         super().__init__(appears, frozenset(transitions.keys()), terminal_states)
         self.transitions = transitions
+        self.state_map_after_product: Dict[int, int] = dict()
+        self.original_terminal_states = terminal_states
 
         # LOOKBACK
         self.last_state: int = 0
@@ -212,6 +214,13 @@ class ProbabilisticRewardMachine(RewardMachine):
 
     def get_initial_state(self) -> int:
         return 0
+
+    def is_event_available(self, u: int, event: str):
+        is_event_available = False
+        if u in self.transitions:
+            if frozenset({event}) in self.transitions[u]:
+                is_event_available = True
+        return is_event_available
 
     ### END CYRUS INTERFACE
 
@@ -279,6 +288,54 @@ class ProbabilisticRewardMachine(RewardMachine):
                 done: bool = next_state in self.terminal_states
                 return next_state, next_reward, done
         assert False
+
+    def add_tlcd(
+        self, causal_dfa: Optional["CausalDFA"]
+    ) -> "ProbabilisticRewardMachine":
+        value_iteration_params: RunConfig = RunConfig(
+            agent_name="----",
+            total_timesteps=int(1e03),
+            learning_rate=1e-1,
+            gamma=0.9,
+            q_init=2,
+            epsilon=0.2,
+            per_episode_steps=2000,
+            print_freq=1000,
+            reward_window_size=5000,
+            print_actions=False,
+            per_episode_steps_demo=20,
+            num_demo_episodes=10,
+        )
+
+        prm: ProbabilisticRewardMachine = copy.deepcopy(self)
+        b: ProbabilisticRewardMachine = prm
+        b1: ProbabilisticRewardMachine = copy.deepcopy(self)
+        b2: ProbabilisticRewardMachine = copy.deepcopy(self).negate()
+
+        if causal_dfa is not None:
+            b = prm_causal_product(b, causal_dfa, scheme="no_effect")
+            b1 = prm_causal_product(b1, causal_dfa, scheme="reward_shaping")
+            b2 = prm_causal_product(b2, causal_dfa, scheme="reward_shaping")
+
+        print("Computing B1...")
+        state_potentials_b1, _state_action_potentials_b1 = get_rs_potential_new(
+            b1, value_iteration_params
+        )
+        print("Computing B2...")
+        state_potentials_b2, _state_action_potentials_b2 = get_rs_potential_new(
+            b2, value_iteration_params
+        )
+
+        b.original_terminal_states = b.terminal_states
+
+        for rm_state, _potential in enumerate(state_potentials_b1):
+            if (
+                abs(state_potentials_b1[rm_state]) < 1e-4
+                and abs(state_potentials_b2[rm_state]) < 1e-4
+            ):
+                b.terminal_states = b.terminal_states.union(frozenset({rm_state}))
+
+        return b
 
 
 class RewardMachineRunner:
@@ -366,7 +423,14 @@ def prm_causal_product(
                         pass
                     transitions[state][input_symbol][next_state] = (p, r)
 
-    return ProbabilisticRewardMachine(transitions, appears, terminal_states)
+    state_map_after_product: Dict[int, int] = dict()
+    for u, (old_u, _dfa_q) in self_to_pair_state_map.items():
+        state_map_after_product[u] = old_u
+
+    result = ProbabilisticRewardMachine(transitions, appears, terminal_states)
+    result.state_map_after_product = state_map_after_product
+
+    return result
 
     # def transition(
     #     self, current_state: int, input_symbol: frozenset[str]

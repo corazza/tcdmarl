@@ -5,7 +5,22 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Routing (decentralized)",
+            "name": "Routing (decentralized, TL-CD)",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/tcdmarl/main.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--tlcd",
+                "--experiment",
+                "routing"
+            ],
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            }
+        },
+        {
+            "name": "Routing (decentralized, no TL-CD)",
             "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/tcdmarl/main.py",
@@ -13,6 +28,21 @@
             "args": [
                 "--experiment",
                 "routing"
+            ],
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            }
+        },
+        {
+            "name": "Routing (show MDP)",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/tcdmarl/main.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--experiment",
+                "routing",
+                "--show"
             ],
             "env": {
                 "PYTHONPATH": "${workspaceFolder}"

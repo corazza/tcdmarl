@@ -9,3 +9,4 @@
 (3, 4, 'k', 0) # B1, B2 -> K2 | 10, 8
 (4, 5, 'g', 1) # goal state has been reached | 10, 9
 (6, 6, 'True', 0) # state 6 is an absorbing state | 10
+['f'] # additional events

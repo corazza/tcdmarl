@@ -2,12 +2,13 @@ from pathlib import Path
 from typing import Any, Dict, List
 
 from tcdmarl.path_consts import RM_DIR
+from tcdmarl.tcrl.custom_dfas_neurips import dfa_paper_no_goal_after_flowers
 from tcdmarl.tester.learning_params import LearningParameters
 from tcdmarl.tester.tester import Tester
 from tcdmarl.tester.tester_params import TestingParameters
 
 
-def routing_config(num_times: int) -> Tester:
+def routing_config(num_times: int, use_tlcd: bool) -> Tester:
     """
     Function setting the experiment parameters and environment.
 
@@ -42,7 +43,7 @@ def routing_config(num_times: int) -> Tester:
         max_timesteps_per_task=testing_params.num_steps,
     )
 
-    total_steps = 250 * step_unit  # 100 * step_unit
+    total_steps = 200 * step_unit  # 100 * step_unit
     min_steps = 1
 
     # Set the environment settings for the experiment
@@ -102,8 +103,9 @@ def routing_config(num_times: int) -> Tester:
     env_settings["B2"] = (4, 3)
     env_settings["B3"] = (12, 1)
     env_settings["K1"] = (6, 8)
-    env_settings["D"] = (7, 11)
     env_settings["K2"] = (6, 6)
+    env_settings["F1"] = (9, 4)
+    env_settings["F2"] = (1, 12)
     env_settings["yellow_tiles"] = [(0, 5), (1, 5)]
     env_settings["green_tiles"] = [(4, 6)]
     env_settings["orange_tiles"] = [(4, 8)]
@@ -117,6 +119,12 @@ def routing_config(num_times: int) -> Tester:
     ]
 
     env_settings["p"] = 0.98
+    env_settings["sinks"] = [env_settings["F1"], env_settings["F2"]]
+
+    if use_tlcd:
+        tlcd = dfa_paper_no_goal_after_flowers()
+    else:
+        tlcd = None
 
     return Tester(
         learning_params=learning_params,
@@ -131,4 +139,5 @@ def routing_config(num_times: int) -> Tester:
         env_settings=env_settings,
         experiment="routing",
         use_prm=True,
+        tlcd=tlcd,
     )

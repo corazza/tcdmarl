@@ -21,3 +21,4 @@
 (7, 8, 'k', 0) # K2 collected
 (8, 9, 'g', 1) # Goal state is reached
 (10, 10, 'True', 0) # state 10 is an absorbing state
+[] # additional events

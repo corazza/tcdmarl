@@ -51,9 +51,9 @@ def run_qlearning_task(
         training_environments: List[RoutingEnv] = []
         for i in range(num_agents):
             training_environments.append(
-                RoutingEnv(agent_list[i].rm_file, i, tester.env_settings).use_prm(
-                    tester.use_prm
-                )
+                RoutingEnv(
+                    agent_list[i].rm_file, i, tester.env_settings, tester.tlcd
+                ).use_prm(tester.use_prm)
             )
     else:
         raise ValueError('experiment should be one of: "routing"')
@@ -71,9 +71,9 @@ def run_qlearning_task(
                 # a = training_environments[i].get_last_action() # due to MDP slip
                 agent_list[i].update_agent(s_new, a, r, l, learning_params)
 
-                for u in agent_list[i].rm.all_states:
+                for u in agent_list[i].all_states:
                     if not (u == current_u) and not (
-                        u in agent_list[i].rm.terminal_states
+                        u in agent_list[i].terminal_states
                     ):
                         l = training_environments[i].get_mdp_label(s, s_new, u)
                         # print('l', l)
@@ -82,8 +82,8 @@ def run_qlearning_task(
                         u2 = u
                         for e in l:
                             # Get the new reward machine state and the reward of this step
-                            u2 = agent_list[i].rm.get_next_state(u_temp, e)
-                            r = r + agent_list[i].rm.get_reward(u_temp, u2)
+                            u2 = agent_list[i].get_next_state(u_temp, e)
+                            r = r + agent_list[i].get_reward(u_temp, u2)
                             # Update the reward machine state
                             u_temp = u2
                         agent_list[i].update_q_function(
@@ -108,11 +108,18 @@ def run_qlearning_task(
                 actions = agent_list[i].actions
                 agent_id = agent_list[i].agent_id
                 num_states = agent_list[i].num_states
-                agent_copy = Agent(rm_file, s_i, num_states, actions, agent_id).use_prm(
-                    tester.use_prm
-                )
+                agent_copy = Agent(
+                    rm_file, s_i, num_states, actions, agent_id, tlcd=tester.tlcd
+                ).use_prm(tester.use_prm)
                 # Pass only the q-function by reference so that the testing updates the original agent's q-function.
                 agent_copy.q = agent_list[i].q
+                if tester.use_prm:
+                    agent_copy.prm.terminal_states = (
+                        agent_copy.prm.original_terminal_states
+                    )
+                    agent_copy.terminal_states = set(
+                        agent_copy.prm.original_terminal_states
+                    )
 
                 agent_list_copy.append(agent_copy)
 
@@ -194,7 +201,7 @@ def run_multi_agent_qlearning_test(
         Number of testing steps required to complete the task.
     """
     num_agents = len(agent_list)
-    testing_env = create_centralized_environment(tester)
+    testing_env = create_centralized_environment(tester, use_prm=True, tlcd=tester.tlcd)
 
     for i in range(num_agents):
         agent_list[i].reset_state()
@@ -214,6 +221,7 @@ def run_multi_agent_qlearning_test(
     step = 0
 
     # Starting interaction with the environment
+    stuck_counter = 0
     for _t in range(testing_params.num_steps):
         step = step + 1
 
@@ -227,6 +235,10 @@ def run_multi_agent_qlearning_test(
         # trajectory.append({'s' : np.array(s_team, dtype=int), 'a' : np.array(a_team, dtype=int), 'u_team': np.array(u_team, dtype=int), 'u': int(testing_env.u)})
 
         r, l, s_team_next = testing_env.environment_step(s_team, a_team)
+        for s_agent in s_team_next:
+            (row, col) = testing_env.get_map().get_state_description(s_agent)
+            if (row, col) in testing_env.get_map().sinks:
+                stuck_counter += 1
         # testing_env.show_graphic(s_team_next)
 
         testing_reward = testing_reward + r
@@ -266,7 +278,7 @@ def run_multi_agent_qlearning_test(
 
     if show_print:
         print(
-            f"Reward of {testing_reward} achieved in {step} steps. Current step: {tester.current_step} of {tester.total_steps}"
+            f"Reward of {testing_reward} achieved in {step} steps. Current step: {tester.current_step} of {tester.total_steps} (stuck for {stuck_counter} steps)"
         )
 
     return testing_reward, trajectory, step
@@ -307,7 +319,9 @@ def run_multi_agent_experiment(
             len(tester.rm_learning_file_list) == num_agents
         ), "Number of specified local reward machines must match specified number of agents."
 
-        testing_env = create_centralized_environment(tester)
+        testing_env = create_centralized_environment(
+            tester, use_prm=False, tlcd=tester.tlcd
+        )
         num_states = testing_env.get_map().get_num_states()
 
         # Create the a list of agents for this experiment
@@ -316,9 +330,9 @@ def run_multi_agent_experiment(
             actions = testing_env.get_actions(i)
             s_i = testing_env.get_initial_state(i)
             agent_list.append(
-                Agent(rm_learning_file_list[i], s_i, num_states, actions, i).use_prm(
-                    tester.use_prm
-                )
+                Agent(
+                    rm_learning_file_list[i], s_i, num_states, actions, i, tester.tlcd
+                ).use_prm(tester.use_prm)
             )
 
         num_episodes = 0
