@@ -311,6 +311,12 @@ class CentralizedEnv(ABC):
     def get_initial_team_state(self) -> NDArray[int32]:
         pass
 
+    @abstractmethod
+    def get_mdp_label(
+        self, _s: NDArray[int32], s_next: NDArray[int32], u: int
+    ) -> List[str]:
+        pass
+
 
 class Actions(Enum):
     """

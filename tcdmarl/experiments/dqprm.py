@@ -201,7 +201,9 @@ def run_multi_agent_qlearning_test(
         Number of testing steps required to complete the task.
     """
     num_agents = len(agent_list)
-    testing_env = create_centralized_environment(tester, use_prm=True, tlcd=tester.tlcd)
+    testing_env = create_centralized_environment(
+        tester, use_prm=tester.use_prm, tlcd=tester.tlcd
+    )
 
     for i in range(num_agents):
         agent_list[i].reset_state()
@@ -217,11 +219,10 @@ def run_multi_agent_qlearning_test(
     testing_reward = 0
 
     trajectory: List[Dict[str, Any]] = []
-
     step = 0
+    stuck_counter = 0
 
     # Starting interaction with the environment
-    stuck_counter = 0
     for _t in range(testing_params.num_steps):
         step = step + 1
 
@@ -286,7 +287,7 @@ def run_multi_agent_qlearning_test(
 
 def run_multi_agent_experiment(
     tester: Tester, num_agents: int, num_times: int, show_print: bool = True
-) -> None:
+) -> Tester:
     """
     Run the entire q-learning with reward machines experiment a number of times specified by num_times.
 
@@ -319,9 +320,8 @@ def run_multi_agent_experiment(
             len(tester.rm_learning_file_list) == num_agents
         ), "Number of specified local reward machines must match specified number of agents."
 
-        testing_env = create_centralized_environment(
-            tester, use_prm=False, tlcd=tester.tlcd
-        )
+        # This is instance is only used for extracting environment meta-info
+        testing_env = create_centralized_environment(tester, use_prm=False, tlcd=None)
         num_states = testing_env.get_map().get_num_states()
 
         # Create the a list of agents for this experiment
@@ -352,56 +352,4 @@ def run_multi_agent_experiment(
 
     tester.agent_list = agent_list
 
-    plot_multi_agent_results(tester, num_agents)
-
-
-def plot_multi_agent_results(tester: Tester, _num_agents: int):
-    """
-    Plot the results stored in tester.results for each of the agents.
-    """
-
-    prc_25: List[int] = list()
-    prc_50: List[int] = list()
-    prc_75: List[int] = list()
-
-    # Buffers for plots
-    current_step: List[int] = list()
-    current_25: List[float] = list()
-    current_50: List[float] = list()
-    current_75: List[float] = list()
-    steps: List[int] = list()
-
-    plot_dict = tester.results["testing_steps"]
-
-    for step in plot_dict.keys():
-        if len(current_step) < 10:
-            current_25.append(np.percentile(np.array(plot_dict[step]), 25))
-            current_50.append(np.percentile(np.array(plot_dict[step]), 50))
-            current_75.append(np.percentile(np.array(plot_dict[step]), 75))
-            current_step.append(sum(plot_dict[step]) / len(plot_dict[step]))
-        else:
-            current_step.pop(0)
-            current_25.pop(0)
-            current_50.pop(0)
-            current_75.pop(0)
-            current_25.append(np.percentile(np.array(plot_dict[step]), 25))
-            current_50.append(np.percentile(np.array(plot_dict[step]), 50))
-            current_75.append(np.percentile(np.array(plot_dict[step]), 75))
-            current_step.append(sum(plot_dict[step]) / len(plot_dict[step]))
-
-        prc_25.append(sum(current_25) / len(current_25))
-        prc_50.append(sum(current_50) / len(current_50))
-        prc_75.append(sum(current_75) / len(current_75))
-        steps.append(step)
-
-    plt.plot(steps, prc_25, alpha=0)
-    plt.plot(steps, prc_50, color="red")
-    plt.plot(steps, prc_75, alpha=0)
-    plt.grid()
-    plt.fill_between(steps, prc_50, prc_25, color="red", alpha=0.25)
-    plt.fill_between(steps, prc_50, prc_75, color="red", alpha=0.25)
-    plt.ylabel("Testing Steps to Task Completion", fontsize=15)
-    plt.xlabel("Training Steps", fontsize=15)
-    plt.locator_params(axis="x", nbins=5)
-
-    plt.show()
+    return tester

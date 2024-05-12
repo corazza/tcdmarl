@@ -1,17 +1,17 @@
-import os
 import random
-import time
 from pathlib import Path
-from typing import List, Optional, Set
+from typing import List, Optional, Set, Tuple
 
-import matplotlib.pyplot as plt
 import numpy as np
-from reward_machines.sparse_reward_machine import SparseRewardMachine
-from tester.tester import Tester
+from numpy import int32
+from numpy.typing import NDArray
 
+from tcdmarl.reward_machines.sparse_reward_machine import SparseRewardMachine
 from tcdmarl.shared_mem import PRM_TLCD_MAP
-from tcdmarl.tcrl.reward_machines.rm_common import CausalDFA, ProbabilisticRewardMachine
+from tcdmarl.tcrl.reward_machines.rm_common import (CausalDFA,
+                                                    ProbabilisticRewardMachine)
 from tcdmarl.tcrl.utils import sparse_rm_to_prm
+from tcdmarl.tester.learning_params import LearningParameters
 
 
 class CentralizedAgent:
@@ -29,10 +29,10 @@ class CentralizedAgent:
 
     def __init__(
         self,
-        rm_file,
-        s_i,
-        num_states,
-        actions,
+        rm_file: Path,
+        s_i: NDArray[int32],
+        num_states: int,
+        actions: NDArray[int32],
         tlcd: Optional[CausalDFA],
     ):
         """
@@ -60,13 +60,13 @@ class CentralizedAgent:
         self.all_states: List[int] = self.rm.all_states
         self.terminal_states: Set[int] = self.rm.terminal_states
 
-        N = self.num_states  # Number of states in the gridworld
+        num_states = self.num_states  # Number of states in the gridworld
 
         # Create a list of the dimensions of the centralized q-function
         # E.g. for a 2 agent team, q should have dimensions SxSxUxAxA
-        q_shape = []
+        q_shape: List[int] = []
         for i in range(self.num_agents):
-            q_shape.append(N)
+            q_shape.append(num_states)
         q_shape.append(len(self.rm.all_states))
         for i in range(self.num_agents):
             q_shape.append(len(self.actions[i]))
@@ -112,13 +112,13 @@ class CentralizedAgent:
         self.all_states = list(self.prm.all_states)
         self.terminal_states = set(self.prm.terminal_states)
 
-        N = self.num_states  # Number of states in the gridworld
+        num_states = self.num_states  # Number of states in the gridworld
 
         # Create a list of the dimensions of the centralized q-function
         # E.g. for a 2 agent team, q should have dimensions SxSxUxAxA
-        q_shape = []
+        q_shape: List[int] = []
         for i in range(self.num_agents):
-            q_shape.append(N)
+            q_shape.append(num_states)
         q_shape.append(len(self.prm.all_states))
         for i in range(self.num_agents):
             q_shape.append(len(self.actions[i]))
@@ -146,7 +146,9 @@ class CentralizedAgent:
             self.u = self.prm.get_initial_state()
         self.is_task_complete = 0
 
-    def get_next_action(self, epsilon, learning_params):
+    def get_next_action(
+        self, epsilon: float, learning_params: LearningParameters
+    ) -> Tuple[NDArray[int32], NDArray[int32]]:
         """
         Return the action next action selected by the agent.
 
@@ -200,7 +202,13 @@ class CentralizedAgent:
         return self.s, a
 
     def update_agent(
-        self, s_new, a, reward, label, learning_params, update_q_function=True
+        self,
+        s_new: NDArray[int32],
+        a: NDArray[int32],
+        reward: int,
+        label: List[str],
+        learning_params: LearningParameters,
+        update_q_function: bool=True,
     ):
         """
         Update the agent's state, q-function, and reward machine after

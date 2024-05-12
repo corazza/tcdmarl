@@ -43,7 +43,12 @@ def routing_config(num_times: int, use_tlcd: bool) -> Tester:
         max_timesteps_per_task=testing_params.num_steps,
     )
 
-    total_steps = 200 * step_unit  # 100 * step_unit
+    # for testing
+    # total_steps = 3 * step_unit
+    # enough to converge for decentralized: 100
+    # total_steps = 100 * step_unit
+    # enough to converge for centralized: 300
+    total_steps = 300 * step_unit
     min_steps = 1
 
     # Set the environment settings for the experiment
@@ -106,6 +111,7 @@ def routing_config(num_times: int, use_tlcd: bool) -> Tester:
     env_settings["K2"] = (6, 6)
     env_settings["F1"] = (9, 4)
     env_settings["F2"] = (1, 12)
+    env_settings["enable_f2"] = False
     env_settings["yellow_tiles"] = [(0, 5), (1, 5)]
     env_settings["green_tiles"] = [(4, 6)]
     env_settings["orange_tiles"] = [(4, 8)]
@@ -119,7 +125,7 @@ def routing_config(num_times: int, use_tlcd: bool) -> Tester:
     ]
 
     env_settings["p"] = 0.98
-    env_settings["sinks"] = [env_settings["F1"], env_settings["F2"]]
+    env_settings["sinks"] = [env_settings["F1"]]
 
     if use_tlcd:
         tlcd = dfa_paper_no_goal_after_flowers()

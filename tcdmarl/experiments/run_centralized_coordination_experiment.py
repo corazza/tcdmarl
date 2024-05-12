@@ -1,7 +1,10 @@
 import time
+from typing import List, Tuple
 
 import matplotlib.pyplot as plt
 import numpy as np
+from numpy import int32
+from numpy.typing import NDArray
 
 from tcdmarl.Agent.centralized_agent import CentralizedAgent
 from tcdmarl.experiments.common import create_centralized_environment
@@ -41,7 +44,9 @@ def run_qlearning_task(
 
     num_steps = learning_params.max_timesteps_per_task
 
-    env = create_centralized_environment(tester)
+    env = create_centralized_environment(
+        tester, use_prm=tester.use_prm, tlcd=tester.tlcd
+    )
 
     for t in range(num_steps):
         # Update step count
@@ -89,10 +94,18 @@ def run_qlearning_task(
                 centralized_agent.s_i,
                 centralized_agent.num_states,
                 centralized_agent.actions,
+                tlcd=tester.tlcd,
             ).use_prm(tester.use_prm)
-            centralized_agent_copy.q = (
-                centralized_agent.q
-            )  # Pass the q function directly. Note that the q-function will be updated during testing.
+            # Pass the q function directly. Note that the q-function will be updated during testing.
+            # JAN: it does not seem to be the case that the Q-function will be updated during testing, because we use update_q_function=False in the testing function
+            centralized_agent_copy.q = centralized_agent.q
+            if tester.use_prm:
+                centralized_agent_copy.prm.terminal_states = (
+                    centralized_agent_copy.prm.original_terminal_states
+                )
+                centralized_agent_copy.terminal_states = set(
+                    centralized_agent_copy.prm.original_terminal_states
+                )
 
             # Run a test of the performance of the agents
             testing_reward, trajectory, testing_steps = run_centralized_qlearning_test(
@@ -146,7 +159,7 @@ def run_centralized_qlearning_test(
     learning_params: LearningParameters,
     testing_params: TestingParameters,
     show_print: bool = True,
-):
+) -> Tuple[int, List[Tuple[NDArray[int32], NDArray[int32], int]], int]:
     """
     Run a test of the q-learning with reward machine method with the current q-function.
 
@@ -168,24 +181,30 @@ def run_centralized_qlearning_test(
     step : int
         Number of testing steps required to complete the task.
     """
-    num_agents = centralized_agent.num_agents
-
-    testing_env = create_centralized_environment(tester)
+    testing_env = create_centralized_environment(
+        tester, use_prm=tester.use_prm, tlcd=tester.tlcd
+    )
 
     centralized_agent.reset_state()
     centralized_agent.initialize_reward_machine()
 
-    testing_reward = 0
-    trajectory = []
-    step = 0
+    testing_reward: int = 0
+    trajectory: List[Tuple[NDArray[int32], NDArray[int32], int]] = []
+    step: int = 0
+    stuck_counter = 0
 
     # Starting interaction with the environment
-    for t in range(testing_params.num_steps):
+    for _t in range(testing_params.num_steps):
         step = step + 1
 
         # Perform a step
         s, a = centralized_agent.get_next_action(-1.0, learning_params)
         r, l, s_team_next = testing_env.environment_step(s, a)
+
+        for s_agent in s_team_next:
+            (row, col) = testing_env.get_map().get_state_description(s_agent)
+            if (row, col) in testing_env.get_map().sinks:
+                stuck_counter += 1
 
         # trajectory.append({'s' : np.array(s_team, dtype=int), 'a' : np.array(a_team, dtype=int), 'u': int(testing_env.u)})
 
@@ -199,9 +218,7 @@ def run_centralized_qlearning_test(
 
     if show_print:
         print(
-            "Reward of {} achieved in {} steps. Current step: {} of {}".format(
-                testing_reward, step, tester.current_step, tester.total_steps
-            )
+            f"Reward of {testing_reward} achieved in {step} steps. Current step: {tester.current_step} of {tester.total_steps} (stuck for {stuck_counter} steps)"
         )
 
     return testing_reward, trajectory, step
@@ -209,10 +226,10 @@ def run_centralized_qlearning_test(
 
 def run_centralized_experiment(
     tester: Tester,
-    num_agents: int,
+    _num_agents: int,
     num_times: int,
     show_print: bool = False,
-) -> None:
+) -> Tester:
     """
     Run the entire q-learning with reward machines experiment a number of times specified by num_times.
 
@@ -237,13 +254,18 @@ def run_centralized_experiment(
 
         rm_test_file = tester.rm_test_file
 
-        testing_env = create_centralized_environment(tester)
+        # This is instance is only used for extracting environment meta-info
+        testing_env = create_centralized_environment(tester, use_prm=False, tlcd=None)
 
-        s_i = testing_env.get_initial_team_state()
-        actions = testing_env.get_team_action_array()
+        s_i: NDArray[int32] = testing_env.get_initial_team_state()
+        actions: NDArray[int32] = testing_env.get_team_action_array()
 
         centralized_agent = CentralizedAgent(
-            rm_test_file, s_i, testing_env.get_map().get_num_states(), actions
+            rm_test_file,
+            s_i,
+            testing_env.get_map().get_num_states(),
+            actions,
+            tlcd=tester.tlcd,
         ).use_prm(tester.use_prm)
 
         num_episodes = 0
@@ -266,56 +288,4 @@ def run_centralized_experiment(
         # Backing up the results
         print("Finished iteration ", t)
 
-    plot_multi_agent_results(tester, num_agents)
-
-
-def plot_multi_agent_results(tester, num_agents):
-    """
-    Plot the results stored in tester.results for each of the agents.
-    """
-
-    prc_25 = list()
-    prc_50 = list()
-    prc_75 = list()
-
-    # Buffers for plots
-    current_step = list()
-    current_25 = list()
-    current_50 = list()
-    current_75 = list()
-    steps = list()
-
-    plot_dict = tester.results["testing_steps"]
-
-    for step in plot_dict.keys():
-        if len(current_step) < 10:
-            current_25.append(np.percentile(np.array(plot_dict[step]), 25))
-            current_50.append(np.percentile(np.array(plot_dict[step]), 50))
-            current_75.append(np.percentile(np.array(plot_dict[step]), 75))
-            current_step.append(sum(plot_dict[step]) / len(plot_dict[step]))
-        else:
-            current_step.pop(0)
-            current_25.pop(0)
-            current_50.pop(0)
-            current_75.pop(0)
-            current_25.append(np.percentile(np.array(plot_dict[step]), 25))
-            current_50.append(np.percentile(np.array(plot_dict[step]), 50))
-            current_75.append(np.percentile(np.array(plot_dict[step]), 75))
-            current_step.append(sum(plot_dict[step]) / len(plot_dict[step]))
-
-        prc_25.append(sum(current_25) / len(current_25))
-        prc_50.append(sum(current_50) / len(current_50))
-        prc_75.append(sum(current_75) / len(current_75))
-        steps.append(step)
-
-    plt.plot(steps, prc_25, alpha=0)
-    plt.plot(steps, prc_50, color="red")
-    plt.plot(steps, prc_75, alpha=0)
-    plt.grid()
-    plt.fill_between(steps, prc_50, prc_25, color="red", alpha=0.25)
-    plt.fill_between(steps, prc_50, prc_75, color="red", alpha=0.25)
-    plt.ylabel("Testing Steps to Task Completion", fontsize=15)
-    plt.xlabel("Training Steps", fontsize=15)
-    plt.locator_params(axis="x", nbins=5)
-
-    plt.show()
+    return tester

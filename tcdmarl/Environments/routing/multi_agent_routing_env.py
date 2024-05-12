@@ -240,7 +240,9 @@ class MultiAgentRoutingEnv(CentralizedEnv):  # TODO rename to CentralizedRouting
 
         if (row1, col1) == self.map.env_settings["F1"]:
             l.append("f")
-        if (row1, col1) == self.map.env_settings["F2"]:
+        if (row1, col1) == self.map.env_settings["F2"] and self.map.env_settings[
+            "enable_f2"
+        ]:
             l.append("f")
 
         if (row2, col2) == self.map.env_settings["B2"]:
@@ -368,7 +370,9 @@ class MultiAgentRoutingEnv(CentralizedEnv):  # TODO rename to CentralizedRouting
                     completed_options.append("k")
                 if (row, col) == self.map.env_settings["F1"]:
                     completed_options.append("f")
-                if (row, col) == self.map.env_settings["F2"]:
+                if (row, col) == self.map.env_settings["F2"] and self.map.env_settings[
+                    "enable_f2"
+                ]:
                     completed_options.append("f")
                 if (row, col) == self.map.env_settings["K2"]:
                     completed_options.append("k")

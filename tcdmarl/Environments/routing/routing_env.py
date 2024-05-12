@@ -146,7 +146,9 @@ class RoutingEnv(DecentralizedEnv):  # TODO rename to DecentralizedRoutingEnv
                 l.append("k")
             if (row, col) == self.map.env_settings["F1"]:
                 l.append("f")
-            if (row, col) == self.map.env_settings["F2"]:
+            if (row, col) == self.map.env_settings["F2"] and self.map.env_settings[
+                "enable_f2"
+            ]:
                 l.append("f")
             if (row, col) == self.map.env_settings["goal_location"]:
                 l.append("g")
