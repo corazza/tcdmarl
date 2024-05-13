@@ -116,6 +116,22 @@ class RoutingState:
         self.b2_pressed: bool = b2_pressed
         self.b3_pressed: bool = b3_pressed
 
+    def __eq__(self, other: Any) -> bool:
+        if not isinstance(other, RoutingState):
+            return False
+        return (
+            self.key_collected == other.key_collected
+            and self.b1_pressed == other.b1_pressed
+            and self.b2_pressed == other.b2_pressed
+            and self.b3_pressed == other.b3_pressed
+        )
+
+    def __str__(self) -> str:
+        return f"Key: {self.key_collected}, B1: {self.b1_pressed}, B2: {self.b2_pressed}, B3: {self.b3_pressed}"
+
+    def __repr__(self) -> str:
+        return self.__str__()
+
 
 class RoutingMap(Map):
     """
@@ -199,17 +215,26 @@ class RoutingMap(Map):
 
         # If the appropriate button hasn't yet been pressed, don't allow the agent into the colored region
         if agent_id == 0:
-            if routing_state.b3_pressed:
+            # Exploding door
+            if routing_state.b1_pressed and not routing_state.b2_pressed:
+                if (row, col) in self.yellow_tiles:
+                    s_next = s
+
+            # Routing door (all 3 buttons need to have been pressed)
+            if (
+                routing_state.b1_pressed
+                and routing_state.b2_pressed
+                and routing_state.b3_pressed
+            ):
                 if (row, col) in self.orange_tiles:
                     s_next = s
             else:
                 if (row, col) in self.green_tiles:
                     s_next = s
+
+            # Goal
             if not routing_state.key_collected:
                 if (row, col) in self.blue_tiles:
-                    s_next = s
-            if routing_state.b1_pressed and not routing_state.b2_pressed:
-                if (row, col) in self.yellow_tiles:
                     s_next = s
         else:
             assert agent_id == 1

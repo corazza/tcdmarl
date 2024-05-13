@@ -125,13 +125,13 @@ def run_qlearning_task(
                 ).use_prm(tester.use_prm)
                 # Pass only the q-function by reference so that the testing updates the original agent's q-function.
                 agent_copy.q = agent_list[i].q
-                if tester.use_prm:
-                    agent_copy.prm.terminal_states = (
-                        agent_copy.prm.original_terminal_states
-                    )
-                    agent_copy.terminal_states = set(
-                        agent_copy.prm.original_terminal_states
-                    )
+                # if tester.use_prm:
+                #     agent_copy.prm.terminal_states = (
+                #         agent_copy.prm.original_terminal_states
+                #     )
+                #     agent_copy.terminal_states = set(
+                #         agent_copy.prm.original_terminal_states
+                #     )
 
                 agent_list_copy.append(agent_copy)
 
@@ -143,6 +143,8 @@ def run_qlearning_task(
                 testing_params,
                 show_print=show_print,
             )
+            # if we failed, we record it as full episode
+            assert not (testing_steps < testing_params.num_steps and testing_reward < 1)
 
             # Save the testing reward
             if 0 not in tester.results.keys():
@@ -243,6 +245,8 @@ def run_multi_agent_qlearning_test(
     step = 0
     stuck_counter = 0
 
+    failed = False
+
     # Starting interaction with the environment
     for _t in range(testing_params.num_steps):
         step = step + 1
@@ -295,6 +299,10 @@ def run_multi_agent_qlearning_test(
                 update_q_function=False,
             )
 
+        if any(agent.is_task_failed for agent in agent_list):
+            failed = True
+            break
+
         if all(agent.is_task_complete for agent in agent_list):
             break
 
@@ -302,6 +310,9 @@ def run_multi_agent_qlearning_test(
         print(
             f"Reward of {testing_reward} achieved in {step} steps. Current step: {tester.current_step} of {tester.total_steps} (stuck for {stuck_counter} steps, stuck in training for {tester.get_training_stuck_counter()/tester.current_step:.4f} steps)"
         )
+
+    if failed:
+        step = testing_params.num_steps
 
     return testing_reward, trajectory, step
 

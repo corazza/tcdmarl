@@ -111,7 +111,7 @@
                 "10",
                 "--plot-results-after-experiment",
                 "--step-unit-factor",
-                "500",
+                "1000",
             ],
             "env": {
                 "PYTHONPATH": "${workspaceFolder}"
@@ -132,7 +132,7 @@
                 "10",
                 "--plot-results-after-experiment",
                 "--step-unit-factor",
-                "500",
+                "1000",
             ],
             "env": {
                 "PYTHONPATH": "${workspaceFolder}"

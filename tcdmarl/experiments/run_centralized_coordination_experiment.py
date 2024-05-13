@@ -104,13 +104,13 @@ def run_qlearning_task(
             # Pass the q function directly. Note that the q-function will be updated during testing.
             # JAN: it does not seem to be the case that the Q-function will be updated during testing, because we use update_q_function=False in the testing function
             centralized_agent_copy.q = centralized_agent.q
-            if tester.use_prm:
-                centralized_agent_copy.prm.terminal_states = (
-                    centralized_agent_copy.prm.original_terminal_states
-                )
-                centralized_agent_copy.terminal_states = set(
-                    centralized_agent_copy.prm.original_terminal_states
-                )
+            # if tester.use_prm:
+            #     centralized_agent_copy.prm.terminal_states = (
+            #         centralized_agent_copy.prm.original_terminal_states
+            #     )
+            #     centralized_agent_copy.terminal_states = set(
+            #         centralized_agent_copy.prm.original_terminal_states
+            #     )
 
             # Run a test of the performance of the agents
             testing_reward, trajectory, testing_steps = run_centralized_qlearning_test(
@@ -120,6 +120,8 @@ def run_qlearning_task(
                 testing_params,
                 show_print=show_print,
             )
+            # if we failed, we record it as full episode
+            assert not (testing_steps < testing_params.num_steps and testing_reward < 1)
 
             if 0 not in tester.results.keys():
                 tester.results[0] = {}
@@ -198,6 +200,8 @@ def run_centralized_qlearning_test(
     step: int = 0
     stuck_counter = 0
 
+    failed = False
+
     # Starting interaction with the environment
     for _t in range(testing_params.num_steps):
         step = step + 1
@@ -219,12 +223,17 @@ def run_centralized_qlearning_test(
             s_team_next, a, r, l, learning_params, update_q_function=False
         )
         if centralized_agent.is_task_complete:
+            if centralized_agent.is_task_failed:
+                failed = True
             break
 
     if show_print:
         print(
             f"Reward of {testing_reward} achieved in {step} steps. Current step: {tester.current_step} of {tester.total_steps} (stuck for {stuck_counter} steps, stuck in training for {tester.get_training_stuck_counter()/tester.current_step:.4f} steps)"
         )
+
+    if failed:
+        step = testing_params.num_steps
 
     return testing_reward, trajectory, step
 

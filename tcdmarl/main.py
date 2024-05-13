@@ -2,6 +2,7 @@
 Run the experiment specified by the user.
 """
 
+import csv
 import pickle
 from datetime import datetime
 from types import NoneType
@@ -29,7 +30,10 @@ def save_results(collection: str, experiment: str, use_tlcd: bool, tester: Teste
     Save the results of the experiment to a file.
     """
     use_tlcd_str = "tlcd" if use_tlcd else "no_tlcd"
-    experiment_data_path = RESULTS_DIR / collection / f"{experiment}_{use_tlcd_str}"
+    day_month = datetime.now().strftime("%Y-%m-%d")
+    experiment_data_path = (
+        RESULTS_DIR / day_month / collection / f"{experiment}_{use_tlcd_str}"
+    )
     experiment_data_path.mkdir(parents=True, exist_ok=True)
 
     now = datetime.now()
@@ -50,6 +54,29 @@ def load_results(path: str) -> Tester:
     with open(path, "rb") as file:
         tester = pickle.load(file)
     return tester
+
+
+def save_to_csv(
+    steps: List[int],
+    prc_25: List[float],
+    prc_50: List[float],
+    prc_75: List[float],
+    save_file_path: str,
+) -> None:
+    with open(save_file_path, "w", newline="", encoding="utf-8") as csvfile:
+        fieldnames = ["steps", "prc_25", "prc_50", "prc_75"]
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+
+        writer.writeheader()
+        for i, step in enumerate(steps):
+            writer.writerow(
+                {
+                    "steps": step,
+                    "prc_25": prc_25[i],
+                    "prc_50": prc_50[i],
+                    "prc_75": prc_75[i],
+                }
+            )
 
 
 def plot_multi_agent_results(
@@ -126,7 +153,7 @@ def plot_multi_agent_results(
         use_tlcd_str = "tlcd" if use_tlcd else "no_tlcd"
         day_month = datetime.now().strftime("%Y-%m-%d")
         experiment_data_path = (
-            RESULTS_DIR / collection / day_month / f"{experiment}_{use_tlcd_str}"
+            RESULTS_DIR / day_month / collection / f"{experiment}_{use_tlcd_str}"
         )
         experiment_data_path.mkdir(parents=True, exist_ok=True)
 
@@ -138,6 +165,10 @@ def plot_multi_agent_results(
 
         plt.savefig(save_file_path)
         print(f"Plot saved to {save_file_path}")
+
+        csv_save_file_path = experiment_data_path / f"{date_time_str}.csv"
+        save_to_csv(steps, prc_25, prc_50, prc_75, csv_save_file_path)
+        print(f"CSV saved to {csv_save_file_path}")
 
     if show_plot:
         plt.show()
@@ -187,6 +218,11 @@ def run_experiment(
             show_print=True,
         )
 
+    # Save the results
+    save_results(
+        collection=collection, experiment=experiment, use_tlcd=use_tlcd, tester=tester
+    )
+
     # Plot the results
     plot_multi_agent_results(
         collection=collection,
@@ -195,11 +231,6 @@ def run_experiment(
         tester=tester,
         show_plot=show_plot,
         save_plot=True,
-    )
-
-    # Save the results
-    save_results(
-        collection=collection, experiment=experiment, use_tlcd=use_tlcd, tester=tester
     )
 
     return tester
@@ -274,7 +305,7 @@ def main(
             plot_multi_agent_results(
                 collection="none",
                 experiment=tester.experiment,
-                use_tlcd=False,
+                use_tlcd=tester.tlcd is not None,
                 tester=tester,
                 save_plot=False,
                 show_plot=True,
