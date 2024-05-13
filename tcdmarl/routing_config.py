@@ -127,7 +127,7 @@ def routing_config(num_times: int, use_tlcd: bool, step_unit_factor: int) -> Tes
     ]
 
     env_settings["p"] = 0.98
-    env_settings["sinks"] = [env_settings["F1"]]
+    env_settings["sinks"] = [env_settings["F1"], env_settings["K1"]]
     if env_settings["enable_f2"]:
         env_settings["sinks"].append(env_settings["F2"])
 

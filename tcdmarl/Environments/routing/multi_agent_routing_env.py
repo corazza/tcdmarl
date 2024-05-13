@@ -8,13 +8,11 @@ import numpy as np
 from numpy import int32
 from numpy.typing import NDArray
 
-from tcdmarl.Environments.common import (STR_TO_ACTION, CentralizedEnv,
-                                         RoutingMap)
+from tcdmarl.Environments.common import STR_TO_ACTION, CentralizedEnv, RoutingMap
 from tcdmarl.reward_machines.sparse_reward_machine import SparseRewardMachine
 from tcdmarl.routing_config import routing_config
 from tcdmarl.shared_mem import PRM_TLCD_MAP
-from tcdmarl.tcrl.reward_machines.rm_common import (CausalDFA,
-                                                    ProbabilisticRewardMachine)
+from tcdmarl.tcrl.reward_machines.rm_common import CausalDFA, ProbabilisticRewardMachine
 from tcdmarl.tcrl.utils import sparse_rm_to_prm
 
 
@@ -76,7 +74,9 @@ class MultiAgentRoutingEnv(CentralizedEnv):  # TODO rename to CentralizedRouting
             save_path = f"{self._saved_rm_path}_NO_TLCD"
 
         if not save_path in PRM_TLCD_MAP:
-            self.prm = sparse_rm_to_prm(self.reward_machine).add_tlcd(self.tlcd)
+            self.prm = sparse_rm_to_prm(self.reward_machine)
+            if self.tlcd is not None:
+                self.prm = self.prm.add_tlcd(self.tlcd)
             PRM_TLCD_MAP[save_path] = self.prm
         else:
             self.prm = copy.deepcopy(PRM_TLCD_MAP[save_path])

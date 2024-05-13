@@ -9,8 +9,7 @@ from numpy.typing import NDArray
 
 from tcdmarl.reward_machines.sparse_reward_machine import SparseRewardMachine
 from tcdmarl.shared_mem import PRM_TLCD_MAP
-from tcdmarl.tcrl.reward_machines.rm_common import (CausalDFA,
-                                                    ProbabilisticRewardMachine)
+from tcdmarl.tcrl.reward_machines.rm_common import CausalDFA, ProbabilisticRewardMachine
 from tcdmarl.tcrl.utils import sparse_rm_to_prm
 from tcdmarl.tester.learning_params import LearningParameters
 
@@ -104,7 +103,9 @@ class CentralizedAgent:
             save_path = f"{self._saved_rm_path}_NO_TLCD"
 
         if not save_path in PRM_TLCD_MAP:
-            self.prm = sparse_rm_to_prm(self.rm).add_tlcd(self.tlcd)
+            self.prm = sparse_rm_to_prm(self.rm)
+            if self.tlcd is not None:
+                self.prm = self.prm.add_tlcd(self.tlcd)
             PRM_TLCD_MAP[save_path] = self.prm
         else:
             self.prm = copy.deepcopy(PRM_TLCD_MAP[save_path])

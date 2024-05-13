@@ -124,7 +124,10 @@ def plot_multi_agent_results(
     # Save as image to results
     if save_plot:
         use_tlcd_str = "tlcd" if use_tlcd else "no_tlcd"
-        experiment_data_path = RESULTS_DIR / collection / f"{experiment}_{use_tlcd_str}"
+        day_month = datetime.now().strftime("%Y-%m-%d")
+        experiment_data_path = (
+            RESULTS_DIR / collection / day_month / f"{experiment}_{use_tlcd_str}"
+        )
         experiment_data_path.mkdir(parents=True, exist_ok=True)
 
         now = datetime.now()

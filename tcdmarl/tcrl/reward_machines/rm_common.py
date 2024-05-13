@@ -289,9 +289,7 @@ class ProbabilisticRewardMachine(RewardMachine):
                 return next_state, next_reward, done
         assert False
 
-    def add_tlcd(
-        self, causal_dfa: Optional["CausalDFA"]
-    ) -> "ProbabilisticRewardMachine":
+    def add_tlcd(self, causal_dfa: "CausalDFA") -> "ProbabilisticRewardMachine":
         value_iteration_params: RunConfig = RunConfig(
             agent_name="----",
             total_timesteps=int(1e03),
@@ -312,10 +310,9 @@ class ProbabilisticRewardMachine(RewardMachine):
         b1: ProbabilisticRewardMachine = copy.deepcopy(self)
         # b2: ProbabilisticRewardMachine = copy.deepcopy(self).negate()
 
-        if causal_dfa is not None:
-            b = prm_causal_product(b, causal_dfa, scheme="no_effect")
-            b1 = prm_causal_product(b1, causal_dfa, scheme="reward_shaping")
-            # b2 = prm_causal_product(b2, causal_dfa, scheme="reward_shaping")
+        b = prm_causal_product(b, causal_dfa, scheme="no_effect")
+        b1 = prm_causal_product(b1, causal_dfa, scheme="reward_shaping")
+        # b2 = prm_causal_product(b2, causal_dfa, scheme="reward_shaping")
 
         print("Computing B1...")
         state_potentials_b1, _state_action_potentials_b1 = get_rs_potential_new(
