@@ -60,6 +60,11 @@ def run_qlearning_task(
             # a = np.copy(env.last_action) # due to MDP slip
             centralized_agent.update_agent(s_new, a, r, l, learning_params)
 
+            for s_agent in s_new:
+                (row, col) = env.get_map().get_state_description(s_agent)
+                if (row, col) in env.get_map().sinks:
+                    tester.add_training_stuck_step()
+
             for u in centralized_agent.all_states:
                 if not (u == current_u) and not (
                     u in centralized_agent.terminal_states
@@ -218,7 +223,7 @@ def run_centralized_qlearning_test(
 
     if show_print:
         print(
-            f"Reward of {testing_reward} achieved in {step} steps. Current step: {tester.current_step} of {tester.total_steps} (stuck for {stuck_counter} steps)"
+            f"Reward of {testing_reward} achieved in {step} steps. Current step: {tester.current_step} of {tester.total_steps} (stuck for {stuck_counter} steps, stuck in training for {tester.get_training_stuck_counter()/tester.current_step:.4f} steps)"
         )
 
     return testing_reward, trajectory, step

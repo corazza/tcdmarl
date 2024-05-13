@@ -4,15 +4,26 @@ Decentralized Q-learning with Projected Reward Machines (DQPRM) experiment.
 
 from typing import Any, Dict, List, Tuple
 
-import matplotlib.pyplot as plt
 import numpy as np
 
 from tcdmarl.Agent.agent import Agent
+from tcdmarl.Environments.common import DecentralizedEnv
 from tcdmarl.Environments.routing.routing_env import RoutingEnv
 from tcdmarl.experiments.common import create_centralized_environment
 from tcdmarl.tester.learning_params import LearningParameters
 from tcdmarl.tester.tester import Tester
 from tcdmarl.tester.tester_params import TestingParameters
+
+
+def create_decentralized_environment(
+    tester: Tester, agent_list: List[Agent], agent_id: int
+) -> DecentralizedEnv:
+    if tester.experiment == "routing":
+        return RoutingEnv(
+            agent_list[agent_id].rm_file, agent_id, tester.env_settings, tester.tlcd
+        ).use_prm(tester.use_prm)
+    else:
+        raise ValueError('experiment should be one of: "routing"')
 
 
 def run_qlearning_task(
@@ -47,16 +58,11 @@ def run_qlearning_task(
     num_steps = learning_params.max_timesteps_per_task
 
     # Load the appropriate environments for training
-    if tester.experiment == "routing":
-        training_environments: List[RoutingEnv] = []
-        for i in range(num_agents):
-            training_environments.append(
-                RoutingEnv(
-                    agent_list[i].rm_file, i, tester.env_settings, tester.tlcd
-                ).use_prm(tester.use_prm)
-            )
-    else:
-        raise ValueError('experiment should be one of: "routing"')
+    training_environments: List[DecentralizedEnv] = []
+    for i in range(num_agents):
+        training_environments.append(
+            create_decentralized_environment(tester, agent_list, i)
+        )
 
     for t in range(num_steps):
         # Update step count
@@ -70,6 +76,12 @@ def run_qlearning_task(
                 r, l, s_new = training_environments[i].environment_step(s, a)
                 # a = training_environments[i].get_last_action() # due to MDP slip
                 agent_list[i].update_agent(s_new, a, r, l, learning_params)
+
+                (row, col) = (
+                    training_environments[i].get_map().get_state_description(s_new)
+                )
+                if (row, col) in training_environments[i].get_map().sinks:
+                    tester.add_training_stuck_step()
 
                 for u in agent_list[i].all_states:
                     if not (u == current_u) and not (
@@ -166,6 +178,15 @@ def run_qlearning_task(
             # Make sure we've run at least the minimum number of training steps before breaking the loop
             if tester.stop_task(t):
                 break
+        else:
+            assert not all(agent.is_task_failed for agent in agent_list)
+            for i in range(num_agents):
+                if agent_list[i].is_task_failed:
+                    agent_list[i].reset_state()
+                    agent_list[i].initialize_reward_machine()
+                    training_environments[i] = create_decentralized_environment(
+                        tester=tester, agent_list=agent_list, agent_id=i
+                    )
 
         # checking the steps time-out
         if tester.stop_learning():
@@ -279,7 +300,7 @@ def run_multi_agent_qlearning_test(
 
     if show_print:
         print(
-            f"Reward of {testing_reward} achieved in {step} steps. Current step: {tester.current_step} of {tester.total_steps} (stuck for {stuck_counter} steps)"
+            f"Reward of {testing_reward} achieved in {step} steps. Current step: {tester.current_step} of {tester.total_steps} (stuck for {stuck_counter} steps, stuck in training for {tester.get_training_stuck_counter()/tester.current_step:.4f} steps)"
         )
 
     return testing_reward, trajectory, step

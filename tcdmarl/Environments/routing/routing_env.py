@@ -1,3 +1,4 @@
+import copy
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -70,7 +71,7 @@ class RoutingEnv(DecentralizedEnv):  # TODO rename to DecentralizedRoutingEnv
             self.prm = sparse_rm_to_prm(self.reward_machine).add_tlcd(self.tlcd)
             PRM_TLCD_MAP[save_path] = self.prm
         else:
-            self.prm = PRM_TLCD_MAP[save_path]
+            self.prm = copy.deepcopy(PRM_TLCD_MAP[save_path])
 
         self.u = self.prm.get_initial_state()
         self._use_prm = True
@@ -127,6 +128,9 @@ class RoutingEnv(DecentralizedEnv):  # TODO rename to DecentralizedRoutingEnv
             self.u = u2
 
         return r, l, s_next
+
+    def get_map(self) -> RoutingMap:
+        return self.map
 
     def get_mdp_label(self, _s: int, s_next: int, _u: int) -> List[str]:
         """

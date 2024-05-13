@@ -1,3 +1,4 @@
+import copy
 import random
 from pathlib import Path
 from typing import List, Optional, Set, Tuple
@@ -106,7 +107,7 @@ class CentralizedAgent:
             self.prm = sparse_rm_to_prm(self.rm).add_tlcd(self.tlcd)
             PRM_TLCD_MAP[save_path] = self.prm
         else:
-            self.prm = PRM_TLCD_MAP[save_path]
+            self.prm = copy.deepcopy(PRM_TLCD_MAP[save_path])
 
         self.u = self.prm.get_initial_state()
         self.all_states = list(self.prm.all_states)
@@ -208,7 +209,7 @@ class CentralizedAgent:
         reward: int,
         label: List[str],
         learning_params: LearningParameters,
-        update_q_function: bool=True,
+        update_q_function: bool = True,
     ):
         """
         Update the agent's state, q-function, and reward machine after

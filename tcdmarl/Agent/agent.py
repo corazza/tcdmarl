@@ -72,6 +72,7 @@ class Agent:
         )
         self.total_local_reward = 0
         self.is_task_complete = 0
+        self.is_task_failed = 0
 
         # PRMs x TL-CDs
         self._saved_rm_path = self.rm_file
@@ -103,6 +104,7 @@ class Agent:
         )
         self.total_local_reward = 0
         self.is_task_complete = 0
+        self.is_task_failed = 0
 
         self._use_prm = True
         return self
@@ -134,6 +136,7 @@ class Agent:
         else:
             self.u = self.prm.get_initial_state()
         self.is_task_complete = 0
+        self.is_task_failed = 0
 
     def is_local_event_available(self, label: List[str]) -> bool:
         # Only try accessing the first event in label if it exists
@@ -256,6 +259,8 @@ class Agent:
             if self.prm.is_terminal_state(self.u):
                 # Completed task. Set flag.
                 self.is_task_complete = 1
+                if self.u not in self.prm.original_terminal_states:
+                    self.is_task_failed = 1
 
     def update_q_function(
         self,

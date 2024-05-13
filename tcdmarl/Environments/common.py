@@ -277,6 +277,26 @@ class RoutingMap(Map):
 class DecentralizedEnv(ABC):
     """Base class for decentalized training environments."""
 
+    @abstractmethod
+    def environment_step(self, s: int, a: int) -> Tuple[int, List[str], int]:
+        pass
+
+    @abstractmethod
+    def get_actions(self) -> NDArray[int32]:
+        pass
+
+    @abstractmethod
+    def get_map(self) -> Map:
+        pass
+
+    @abstractmethod
+    def get_initial_state(self) -> int:
+        pass
+
+    @abstractmethod
+    def get_mdp_label(self, _s: int, s_next: int, _u: int) -> List[str]:
+        pass
+
 
 class CentralizedEnv(ABC):
     """Base class for centalized training environments."""

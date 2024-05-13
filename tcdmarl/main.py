@@ -10,6 +10,7 @@ from typing import List
 import click
 import numpy as np
 from matplotlib import pyplot as plt
+from matplotlib.ticker import FuncFormatter, MaxNLocator, MultipleLocator
 
 from tcdmarl.consts import ALL_EXPERIMENT_NAMES
 from tcdmarl.defaults import DEFAULT_NUM_SEPARATE_TRIALS
@@ -18,17 +19,17 @@ from tcdmarl.experiments.dqprm import run_multi_agent_experiment
 from tcdmarl.experiments.run_centralized_coordination_experiment import (
     run_centralized_experiment,
 )
-from tcdmarl.path_consts import RESULTS_DIR, WORK_DIR
+from tcdmarl.path_consts import RESULTS_DIR
 from tcdmarl.routing_config import routing_config
 from tcdmarl.tester.tester import Tester
 
 
-def save_results(experiment: str, use_tlcd: bool, tester: Tester):
+def save_results(collection: str, experiment: str, use_tlcd: bool, tester: Tester):
     """
     Save the results of the experiment to a file.
     """
     use_tlcd_str = "tlcd" if use_tlcd else "no_tlcd"
-    experiment_data_path = RESULTS_DIR / f"{experiment}_{use_tlcd_str}"
+    experiment_data_path = RESULTS_DIR / collection / f"{experiment}_{use_tlcd_str}"
     experiment_data_path.mkdir(parents=True, exist_ok=True)
 
     now = datetime.now()
@@ -51,11 +52,17 @@ def load_results(path: str) -> Tester:
     return tester
 
 
-def plot_multi_agent_results(tester: Tester, _num_agents: int):
+def plot_multi_agent_results(
+    collection: str,
+    experiment: str,
+    use_tlcd: bool,
+    tester: Tester,
+    save_plot: bool,
+    show_plot: bool,
+):
     """
     Plot the results stored in tester.results for each of the agents.
     """
-
     prc_25: List[np.float64] = list()
     prc_50: List[np.float64] = list()
     prc_75: List[np.float64] = list()
@@ -98,22 +105,51 @@ def plot_multi_agent_results(tester: Tester, _num_agents: int):
     plt.fill_between(steps, prc_50, prc_75, color="red", alpha=0.25)
     plt.ylabel("Testing Steps to Task Completion", fontsize=15)
     plt.xlabel("Training Steps", fontsize=15)
-    plt.locator_params(axis="x", nbins=5)
 
-    # Save as image to WORK_DIR/tmp
-    date_str = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    filepath = WORK_DIR / "tmp" / f"plot-{date_str}.png"
-    # Create dirs if they do not exist
-    filepath.parent.mkdir(parents=True, exist_ok=True)
-    plt.savefig(filepath)
-    print(f"Plot saved to {filepath}")
+    # plt.gca().xaxis.set_major_locator(MultipleLocator(base=20000))
 
-    plt.show()
+    def human_format(num):
+        magnitude = 0
+        while abs(num) >= 1000:
+            magnitude += 1
+            num /= 1000.0
+        return "%.1f%s" % (num, ["", "K", "M", "B", "T", "P"][magnitude])
+
+    # ...
+
+    plt.gca().xaxis.set_major_locator(MaxNLocator(nbins=5))
+    plt.gca().xaxis.set_major_formatter(FuncFormatter(lambda x, p: human_format(x)))
+    # plt.locator_params(axis="x", nbins=5)
+
+    # Save as image to results
+    if save_plot:
+        use_tlcd_str = "tlcd" if use_tlcd else "no_tlcd"
+        experiment_data_path = RESULTS_DIR / collection / f"{experiment}_{use_tlcd_str}"
+        experiment_data_path.mkdir(parents=True, exist_ok=True)
+
+        now = datetime.now()
+        date_time_str: str = now.strftime("%Y-%m-%d_%H-%M-%S")
+        filename = f"{date_time_str}.png"
+
+        save_file_path = experiment_data_path / filename
+
+        plt.savefig(save_file_path)
+        print(f"Plot saved to {save_file_path}")
+
+    if show_plot:
+        plt.show()
+
+    # Clear the current figure
+    plt.clf()
 
 
 def run_experiment(
-    experiment: str, use_tlcd: bool, num_trials: int, plot_results: bool
-):
+    collection: str,
+    experiment: str,
+    use_tlcd: bool,
+    num_trials: int,
+    show_plot: bool,
+) -> Tester:
     """
     Run the experiment specified by the user.
     """
@@ -146,11 +182,21 @@ def run_experiment(
         )
 
     # Plot the results
-    if plot_results:
-        plot_multi_agent_results(tester, tester.num_agents)
+    plot_multi_agent_results(
+        collection=collection,
+        experiment=experiment,
+        use_tlcd=use_tlcd,
+        tester=tester,
+        show_plot=show_plot,
+        save_plot=True,
+    )
 
     # Save the results
-    save_results(experiment=experiment, use_tlcd=use_tlcd, tester=tester)
+    save_results(
+        collection=collection, experiment=experiment, use_tlcd=use_tlcd, tester=tester
+    )
+
+    return tester
 
 
 @click.command()
@@ -158,6 +204,16 @@ def run_experiment(
     "--experiment",
     required=False,
     help='The experiment to run. Options: "routing", "centralized_routing"',
+)
+@click.option(
+    "--collection",
+    required=False,
+    help="Experiment collection name",
+)
+@click.option(
+    "--plot-results-after-experiment",
+    is_flag=True,
+    help="When running an individual experiment, plot results afterwards?",
 )
 @click.option(
     "--plot-results",
@@ -186,12 +242,14 @@ def run_experiment(
     help="Number of separate trials to run the algorithm for",
 )
 def main(
+    collection: str,
     experiment: str | NoneType,
     tlcd: bool,
     show: bool,
     all_experiments: bool,
     num_trials: int,
     plot_results: str | NoneType,
+    plot_results_after_experiment: bool,
 ):
     """
     Run the experiment specified by the user.
@@ -200,7 +258,14 @@ def main(
         assert all_experiments or plot_results is not None
         if plot_results is not None:
             tester = load_results(plot_results)
-            plot_multi_agent_results(tester, tester.num_agents)
+            plot_multi_agent_results(
+                collection="none",
+                experiment=tester.experiment,
+                use_tlcd=False,
+                tester=tester,
+                save_plot=False,
+                show_plot=True,
+            )
         else:
             assert all_experiments
             for experiment_name in ALL_EXPERIMENT_NAMES:
@@ -209,10 +274,12 @@ def main(
                         f'Running experiment: "{experiment_name}" (use_tlcd={use_tlcd})'
                     )
                     run_experiment(
-                        experiment_name,
+                        collection=collection,
+                        experiment=experiment_name,
                         use_tlcd=use_tlcd,
                         num_trials=num_trials,
-                        plot_results=False,
+                        # We do not plot after each experiments when running all experiments
+                        show_plot=False,
                     )
     else:
         assert not all_experiments
@@ -228,7 +295,13 @@ def main(
             testing_env.show_graphic(testing_env.get_initial_team_state())
         else:
             print(f'Running experiment: "{experiment}" (use_tlcd={tlcd})')
-            run_experiment(experiment, tlcd, num_trials=num_trials, plot_results=True)
+            run_experiment(
+                collection=collection,
+                experiment=experiment,
+                use_tlcd=tlcd,
+                num_trials=num_trials,
+                show_plot=plot_results_after_experiment,
+            )
 
 
 if __name__ == "__main__":

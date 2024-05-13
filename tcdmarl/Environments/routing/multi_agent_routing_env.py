@@ -1,3 +1,4 @@
+import copy
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -7,11 +8,13 @@ import numpy as np
 from numpy import int32
 from numpy.typing import NDArray
 
-from tcdmarl.Environments.common import STR_TO_ACTION, CentralizedEnv, RoutingMap
+from tcdmarl.Environments.common import (STR_TO_ACTION, CentralizedEnv,
+                                         RoutingMap)
 from tcdmarl.reward_machines.sparse_reward_machine import SparseRewardMachine
 from tcdmarl.routing_config import routing_config
 from tcdmarl.shared_mem import PRM_TLCD_MAP
-from tcdmarl.tcrl.reward_machines.rm_common import CausalDFA, ProbabilisticRewardMachine
+from tcdmarl.tcrl.reward_machines.rm_common import (CausalDFA,
+                                                    ProbabilisticRewardMachine)
 from tcdmarl.tcrl.utils import sparse_rm_to_prm
 
 
@@ -76,7 +79,7 @@ class MultiAgentRoutingEnv(CentralizedEnv):  # TODO rename to CentralizedRouting
             self.prm = sparse_rm_to_prm(self.reward_machine).add_tlcd(self.tlcd)
             PRM_TLCD_MAP[save_path] = self.prm
         else:
-            self.prm = PRM_TLCD_MAP[save_path]
+            self.prm = copy.deepcopy(PRM_TLCD_MAP[save_path])
 
         self.u = self.prm.get_initial_state()
         self._use_prm = True

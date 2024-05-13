@@ -310,28 +310,30 @@ class ProbabilisticRewardMachine(RewardMachine):
         prm: ProbabilisticRewardMachine = copy.deepcopy(self)
         b: ProbabilisticRewardMachine = prm
         b1: ProbabilisticRewardMachine = copy.deepcopy(self)
-        b2: ProbabilisticRewardMachine = copy.deepcopy(self).negate()
+        # b2: ProbabilisticRewardMachine = copy.deepcopy(self).negate()
 
         if causal_dfa is not None:
             b = prm_causal_product(b, causal_dfa, scheme="no_effect")
             b1 = prm_causal_product(b1, causal_dfa, scheme="reward_shaping")
-            b2 = prm_causal_product(b2, causal_dfa, scheme="reward_shaping")
+            # b2 = prm_causal_product(b2, causal_dfa, scheme="reward_shaping")
 
         print("Computing B1...")
         state_potentials_b1, _state_action_potentials_b1 = get_rs_potential_new(
             b1, value_iteration_params
         )
-        print("Computing B2...")
-        state_potentials_b2, _state_action_potentials_b2 = get_rs_potential_new(
-            b2, value_iteration_params
-        )
+        # print("Computing B2...")
+        # state_potentials_b2, _state_action_potentials_b2 = get_rs_potential_new(
+        #     b2, value_iteration_params
+        # )
 
         b.original_terminal_states = b.terminal_states
 
         for rm_state, _potential in enumerate(state_potentials_b1):
             if (
-                abs(state_potentials_b1[rm_state]) < 1e-4
-                and abs(state_potentials_b2[rm_state]) < 1e-4
+                abs(state_potentials_b1[rm_state])
+                < 1e-4
+                # We do not need to use B2 in case there are no negative rewards
+                # and abs(state_potentials_b2[rm_state]) < 1e-4
             ):
                 b.terminal_states = b.terminal_states.union(frozenset({rm_state}))
 

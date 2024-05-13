@@ -5,73 +5,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Routing (decentralized, TL-CD)",
-            "type": "debugpy",
-            "request": "launch",
-            "program": "${workspaceFolder}/tcdmarl/main.py",
-            "console": "integratedTerminal",
-            "args": [
-                "--tlcd",
-                "--experiment",
-                "routing",
-                "--num-trials",
-                "10",
-            ],
-            "env": {
-                "PYTHONPATH": "${workspaceFolder}"
-            }
-        },
-        {
-            "name": "Routing (decentralized, no TL-CD)",
-            "type": "debugpy",
-            "request": "launch",
-            "program": "${workspaceFolder}/tcdmarl/main.py",
-            "console": "integratedTerminal",
-            "args": [
-                "--experiment",
-                "routing",
-                "--num-trials",
-                "10",
-            ],
-            "env": {
-                "PYTHONPATH": "${workspaceFolder}"
-            }
-        },
-        {
-            "name": "Routing (centralized, TL-CD)",
-            "type": "debugpy",
-            "request": "launch",
-            "program": "${workspaceFolder}/tcdmarl/main.py",
-            "console": "integratedTerminal",
-            "args": [
-                "--tlcd",
-                "--experiment",
-                "centralized_routing",
-                "--num-trials",
-                "10",
-            ],
-            "env": {
-                "PYTHONPATH": "${workspaceFolder}"
-            }
-        },
-        {
-            "name": "Routing (centralized, no TL-CD)",
-            "type": "debugpy",
-            "request": "launch",
-            "program": "${workspaceFolder}/tcdmarl/main.py",
-            "console": "integratedTerminal",
-            "args": [
-                "--experiment",
-                "centralized_routing",
-                "--num-trials",
-                "10",
-            ],
-            "env": {
-                "PYTHONPATH": "${workspaceFolder}"
-            }
-        },
-        {
-            "name": "Routing (show MDP)",
+            "name": "Show MDP: routing",
             "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/tcdmarl/main.py",
@@ -86,12 +20,14 @@
             }
         },
         {
-            "name": "All experiments",
+            "name": "Run all experiments",
             "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/tcdmarl/main.py",
             "console": "integratedTerminal",
             "args": [
+                "--collection",
+                "${input:collection}",
                 "--all-experiments",
                 "--num-trials",
                 "10",
@@ -114,12 +50,95 @@
                 "PYTHONPATH": "${workspaceFolder}"
             }
         },
+        {
+            "name": "Routing (decentralized, TL-CD)",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/tcdmarl/main.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--collection",
+                "${input:collection}",
+                "--tlcd",
+                "--experiment",
+                "routing",
+                "--num-trials",
+                "10",
+                "--plot-results-after-experiment"
+            ],
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            }
+        },
+        {
+            "name": "Routing (decentralized, no TL-CD)",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/tcdmarl/main.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--collection",
+                "${input:collection}",
+                "--experiment",
+                "routing",
+                "--num-trials",
+                "10",
+                "--plot-results-after-experiment"
+            ],
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            }
+        },
+        {
+            "name": "Routing (centralized, TL-CD)",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/tcdmarl/main.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--collection",
+                "${input:collection}",
+                "--tlcd",
+                "--experiment",
+                "centralized_routing",
+                "--num-trials",
+                "10",
+                "--plot-results-after-experiment"
+            ],
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            }
+        },
+        {
+            "name": "Routing (centralized, no TL-CD)",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/tcdmarl/main.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--collection",
+                "${input:collection}",
+                "--experiment",
+                "centralized_routing",
+                "--num-trials",
+                "10",
+                "--plot-results-after-experiment"
+            ],
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            }
+        },
     ],
     "inputs": [
         {
             "id": "filePath",
             "type": "promptString",
             "description": "Please enter the file path"
+        },
+        {
+            "id": "collection",
+            "type": "promptString",
+            "description": "Please enter the experiment collection name"
         }
     ]
 }

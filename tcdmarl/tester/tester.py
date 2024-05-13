@@ -51,6 +51,7 @@ class Tester:
 
         # Keep track of the number of learning/testing steps taken
         self.current_step = 0
+        self.training_stuck_counter = 0
 
         # Store the results here
         self.results: Dict[Any, Any] = {}
@@ -60,12 +61,19 @@ class Tester:
     # Methods to keep track of trainint/testing progress
     def restart(self):
         self.current_step = 0
+        self.training_stuck_counter = 0
 
     def add_step(self):
         self.current_step += 1
 
     def get_current_step(self):
         return self.current_step
+
+    def add_training_stuck_step(self):
+        self.training_stuck_counter += 1
+
+    def get_training_stuck_counter(self):
+        return self.training_stuck_counter
 
     def stop_learning(self):
         return self.total_steps <= self.current_step
