@@ -10,10 +10,10 @@ from typing import List
 import click
 import numpy as np
 from matplotlib import pyplot as plt
-from matplotlib.ticker import FuncFormatter, MaxNLocator, MultipleLocator
+from matplotlib.ticker import FuncFormatter, MaxNLocator
 
 from tcdmarl.consts import ALL_EXPERIMENT_NAMES
-from tcdmarl.defaults import DEFAULT_NUM_SEPARATE_TRIALS
+from tcdmarl.defaults import DEFAULT_NUM_SEPARATE_TRIALS, DEFAULT_STEP_UNIT_FACTOR
 from tcdmarl.experiments.common import create_centralized_environment
 from tcdmarl.experiments.dqprm import run_multi_agent_experiment
 from tcdmarl.experiments.run_centralized_coordination_experiment import (
@@ -149,6 +149,7 @@ def run_experiment(
     use_tlcd: bool,
     num_trials: int,
     show_plot: bool,
+    step_unit_factor: int,
 ) -> Tester:
     """
     Run the experiment specified by the user.
@@ -160,6 +161,7 @@ def run_experiment(
         tester = routing_config(
             num_times=num_trials,
             use_tlcd=use_tlcd,
+            step_unit_factor=step_unit_factor,
         )
         tester = run_multi_agent_experiment(
             tester=tester,
@@ -173,6 +175,7 @@ def run_experiment(
         tester = routing_config(
             num_times=num_trials,
             use_tlcd=use_tlcd,
+            step_unit_factor=step_unit_factor,
         )
         tester = run_centralized_experiment(
             tester=tester,
@@ -241,6 +244,12 @@ def run_experiment(
     default=DEFAULT_NUM_SEPARATE_TRIALS,
     help="Number of separate trials to run the algorithm for",
 )
+@click.option(
+    "--step-unit-factor",
+    type=int,
+    default=DEFAULT_STEP_UNIT_FACTOR,
+    help="Number of separate trials to run the algorithm for",
+)
 def main(
     collection: str,
     experiment: str | NoneType,
@@ -250,6 +259,7 @@ def main(
     num_trials: int,
     plot_results: str | NoneType,
     plot_results_after_experiment: bool,
+    step_unit_factor: int,
 ):
     """
     Run the experiment specified by the user.
@@ -280,6 +290,7 @@ def main(
                         num_trials=num_trials,
                         # We do not plot after each experiments when running all experiments
                         show_plot=False,
+                        step_unit_factor=step_unit_factor,
                     )
     else:
         assert not all_experiments
@@ -288,6 +299,7 @@ def main(
             tester = routing_config(
                 num_times=num_trials,
                 use_tlcd=tlcd,
+                step_unit_factor=step_unit_factor,
             )
             testing_env = create_centralized_environment(
                 tester, use_prm=False, tlcd=tester.tlcd
@@ -301,6 +313,7 @@ def main(
                 use_tlcd=tlcd,
                 num_trials=num_trials,
                 show_plot=plot_results_after_experiment,
+                step_unit_factor=step_unit_factor,
             )
 
 

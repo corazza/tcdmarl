@@ -20,6 +20,20 @@
             }
         },
         {
+            "name": "Plot results",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/tcdmarl/main.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--plot-results",
+                "${input:filePath}"
+            ],
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            }
+        },
+        {
             "name": "Run all experiments",
             "type": "debugpy",
             "request": "launch",
@@ -31,20 +45,8 @@
                 "--all-experiments",
                 "--num-trials",
                 "10",
-            ],
-            "env": {
-                "PYTHONPATH": "${workspaceFolder}"
-            }
-        },
-        {
-            "name": "Plot results",
-            "type": "debugpy",
-            "request": "launch",
-            "program": "${workspaceFolder}/tcdmarl/main.py",
-            "console": "integratedTerminal",
-            "args": [
-                "--plot-results",
-                "${input:filePath}"
+                "--step-unit-factor",
+                "500",
             ],
             "env": {
                 "PYTHONPATH": "${workspaceFolder}"
@@ -64,7 +66,9 @@
                 "routing",
                 "--num-trials",
                 "10",
-                "--plot-results-after-experiment"
+                "--plot-results-after-experiment",
+                "--step-unit-factor",
+                "100",
             ],
             "env": {
                 "PYTHONPATH": "${workspaceFolder}"
@@ -83,7 +87,9 @@
                 "routing",
                 "--num-trials",
                 "10",
-                "--plot-results-after-experiment"
+                "--plot-results-after-experiment",
+                "--step-unit-factor",
+                "100",
             ],
             "env": {
                 "PYTHONPATH": "${workspaceFolder}"
@@ -103,7 +109,9 @@
                 "centralized_routing",
                 "--num-trials",
                 "10",
-                "--plot-results-after-experiment"
+                "--plot-results-after-experiment",
+                "--step-unit-factor",
+                "500",
             ],
             "env": {
                 "PYTHONPATH": "${workspaceFolder}"
@@ -122,7 +130,9 @@
                 "centralized_routing",
                 "--num-trials",
                 "10",
-                "--plot-results-after-experiment"
+                "--plot-results-after-experiment",
+                "--step-unit-factor",
+                "500",
             ],
             "env": {
                 "PYTHONPATH": "${workspaceFolder}"

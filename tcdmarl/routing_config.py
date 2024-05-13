@@ -8,7 +8,7 @@ from tcdmarl.tester.tester import Tester
 from tcdmarl.tester.tester_params import TestingParameters
 
 
-def routing_config(num_times: int, use_tlcd: bool) -> Tester:
+def routing_config(num_times: int, use_tlcd: bool, step_unit_factor: int) -> Tester:
     """
     Function setting the experiment parameters and environment.
 
@@ -48,7 +48,9 @@ def routing_config(num_times: int, use_tlcd: bool) -> Tester:
     # enough to converge for decentralized
     # total_steps = 100 * step_unit
     # enough to converge for centralized
-    total_steps = 500 * step_unit
+    # total_steps = 500 * step_unit
+    # from argument
+    total_steps = step_unit_factor * step_unit
     min_steps = 1
 
     # Set the environment settings for the experiment
