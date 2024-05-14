@@ -7,15 +7,15 @@ import numpy as np
 from numpy import int32
 from numpy.typing import NDArray
 
-from tcdmarl.Environments.common import STR_TO_ACTION, CentralizedEnv, RoutingMap
+from tcdmarl.Environments.common import STR_TO_ACTION, CentralizedEnv, ButtonsMap ###Needs to fix
 from tcdmarl.reward_machines.sparse_reward_machine import SparseRewardMachine
-from tcdmarl.routing_config import routing_config
+from tcdmarl.routing_config import buttons_config
 from tcdmarl.shared_mem import PRM_TLCD_MAP
 from tcdmarl.tcrl.reward_machines.rm_common import CausalDFA, ProbabilisticRewardMachine
 from tcdmarl.tcrl.utils import sparse_rm_to_prm
 
 
-class MultiAgentRoutingEnv(CentralizedEnv):  # TODO rename to CentralizedRoutingEnv
+class MultiAgentButtonsEnv(CentralizedEnv):  # TODO rename to CentralizedButtonsEnv
     """
     Multi-agent version.
 
@@ -38,8 +38,8 @@ class MultiAgentRoutingEnv(CentralizedEnv):  # TODO rename to CentralizedRouting
         env_settings : dict
             Dictionary of environment settings
         """
-        self.num_agents: int = 2
-        self.map = RoutingMap(env_settings)
+        self.num_agents: int = 3
+        self.map = ButtonsMap(env_settings)
 
         # Define Initial states of all agents
         self.s_i: NDArray[int32] = np.full(self.num_agents, -1, dtype=int)
@@ -63,7 +63,7 @@ class MultiAgentRoutingEnv(CentralizedEnv):  # TODO rename to CentralizedRouting
         self._use_prm: bool = False
         self.prm: ProbabilisticRewardMachine
 
-    def use_prm(self, value: bool) -> "MultiAgentRoutingEnv":
+    def use_prm(self, value: bool) -> "MultiAgentButtonsEnv":
         if not value:
             return self
 
@@ -82,7 +82,7 @@ class MultiAgentRoutingEnv(CentralizedEnv):  # TODO rename to CentralizedRouting
         self._use_prm = True
         return self
 
-    def get_map(self) -> RoutingMap:
+    def get_map(self) -> ButtonsMap:
         return self.map
 
     def environment_step(
@@ -111,19 +111,39 @@ class MultiAgentRoutingEnv(CentralizedEnv):  # TODO rename to CentralizedRouting
             Array of indeces of next team state.
         """
         s_next = np.full(self.num_agents, -1, dtype=int)
-        # print(s_next)
-        # exit()
 
         for i in range(self.num_agents):
             last_action: int
-            routing_state = self.map.compute_joint_state(self.get_old_u(self.u))
+            buttons_state = self.map.compute_joint_state(self.get_old_u(self.u))
             s_next[i], last_action = self.map.get_next_state(
-                s[i], a[i], i, routing_state=routing_state
+                s[i], a[i], i, buttons_state=buttons_state
             )
             self.last_action[i] = last_action
 
         l = self.get_mdp_label(s, s_next, self.u)
         r: int = 0
+
+
+        agent1 = 0
+        agent2 = 1
+        agent3 = 2
+
+        (row1, col1) = self.map.get_state_description(s_next[agent1])
+        (row2, col2) = self.map.get_state_description(s_next[agent2])
+        (row3, col3) = self.map.get_state_description(s_next[agent3])
+
+        if (row1, col1) == self.map.env_settings['yellow_button']:
+            self.map.yellow_button_pushed = True
+        if (row2, col2) == self.map.env_settings['green_button1']:
+            self.map.green_button_pushed = True
+        if (row2, col2) == self.map.env_settings['green_button2']:
+            self.map.green_button_pushed = True
+
+        (row2_last, col2_last) = self.map.get_state_description(s[agent2])
+        (row3_last, col3_last) = self.map.get_state_description(s[agent3])
+
+        if ((row2, col2) == self.map.env_settings['red_button']) and ((row3, col3) == self.map.env_settings['red_button']) and ((row2_last, col2_last) == self.map.env_settings['red_button']) and ((row3_last, col3_last) == self.map.env_settings['red_button']):
+            self.red_button_pushed = True
 
         for e in l:
             # Get the new reward machine state and the reward of this step
@@ -141,6 +161,9 @@ class MultiAgentRoutingEnv(CentralizedEnv):  # TODO rename to CentralizedRouting
 
         # self.show_graphic(s)
         return r, l, s_next
+    
+
+
 
     def get_actions(self, agent_id: int) -> NDArray[int32]:
         """
@@ -224,9 +247,13 @@ class MultiAgentRoutingEnv(CentralizedEnv):  # TODO rename to CentralizedRouting
 
         agent1 = 0
         agent2 = 1
+        agent3 = 2
 
         row1, col1 = self.map.get_state_description(s_next[agent1])
         row2, col2 = self.map.get_state_description(s_next[agent2])
+        row3, col3 = self.map.get_state_description(s_next[agent3])
+        ########################################################################################
+        ########################################################################################
 
         if (row1, col1) == self.map.env_settings["B1"]:
             l.append("b1")

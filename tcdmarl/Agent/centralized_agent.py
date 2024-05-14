@@ -6,8 +6,8 @@ from typing import List, Optional, Set
 
 import matplotlib.pyplot as plt
 import numpy as np
-from reward_machines.sparse_reward_machine import SparseRewardMachine
-from tester.tester import Tester
+from tcdmarl.reward_machines.sparse_reward_machine import SparseRewardMachine
+from tcdmarl.tester.tester import Tester
 
 from tcdmarl.shared_mem import PRM_TLCD_MAP
 from tcdmarl.tcrl.reward_machines.rm_common import CausalDFA, ProbabilisticRewardMachine

@@ -17,7 +17,8 @@
             ],
             "env": {
                 "PYTHONPATH": "${workspaceFolder}"
-            }
+            },
+            "pythonPath": "/home/zhexu/anaconda3/envs/prm-tlc/bin/python"
         },
         {
             "name": "Routing (decentralized, no TL-CD)",
@@ -31,7 +32,8 @@
             ],
             "env": {
                 "PYTHONPATH": "${workspaceFolder}"
-            }
+            },
+            "pythonPath": "/home/zhexu/anaconda3/envs/prm-tlc/bin/python"
         },
         {
             "name": "Routing (show MDP)",
@@ -46,7 +48,8 @@
             ],
             "env": {
                 "PYTHONPATH": "${workspaceFolder}"
-            }
+            },
+            "pythonPath": "/home/zhexu/anaconda3/envs/prm-tlc/bin/python"
         },
         {
             "name": "Routing (centralized)",
@@ -60,7 +63,23 @@
             ],
             "env": {
                 "PYTHONPATH": "${workspaceFolder}"
-            }
-        }
+            },
+            "pythonPath": "/home/zhexu/anaconda3/envs/prm-tlc/bin/python"
+        },
+        {
+            "name": "Buttons (decentralized, no TL-CD)",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/tcdmarl/main.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--experiment",
+                "buttons"
+            ],
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            },
+            "pythonPath": "/home/zhexu/anaconda3/envs/prm-tlc/bin/python"
+        },
     ]
 }

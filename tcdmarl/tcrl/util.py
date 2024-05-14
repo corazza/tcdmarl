@@ -5,7 +5,7 @@ import numpy as np
 
 # from transformers import pipeline, set_seed
 
-from consts import *
+# from consts import *
 
 
 def random_from(xs: list):

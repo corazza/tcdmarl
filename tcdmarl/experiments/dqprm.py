@@ -9,6 +9,7 @@ import numpy as np
 
 from tcdmarl.Agent.agent import Agent
 from tcdmarl.Environments.routing.routing_env import RoutingEnv
+from tcdmarl.Environments.button.buttons_env import ButtonsEnv
 from tcdmarl.experiments.common import create_centralized_environment
 from tcdmarl.tester.learning_params import LearningParameters
 from tcdmarl.tester.tester import Tester
@@ -46,12 +47,21 @@ def run_qlearning_task(
 
     num_steps = learning_params.max_timesteps_per_task
 
-    # Load the appropriate environments for training
+    # Load the appropriate environments for training   
+    ### HERE ******************************************************************************************************
     if tester.experiment == "routing":
         training_environments: List[RoutingEnv] = []
         for i in range(num_agents):
             training_environments.append(
                 RoutingEnv(
+                    agent_list[i].rm_file, i, tester.env_settings, tester.tlcd
+                ).use_prm(tester.use_prm)
+            )
+    elif tester.experiment == "buttons":
+        training_environments: List[ButtonsEnv] = []
+        for i in range(num_agents):
+            training_environments.append(
+                ButtonsEnv(
                     agent_list[i].rm_file, i, tester.env_settings, tester.tlcd
                 ).use_prm(tester.use_prm)
             )
@@ -66,8 +76,12 @@ def run_qlearning_task(
             # Perform a q-learning step.
             if not (agent_list[i].is_task_complete):
                 current_u = agent_list[i].u
+                # print('current_u', current_u)
                 s, a = agent_list[i].get_next_action(epsilon, learning_params)
                 r, l, s_new = training_environments[i].environment_step(s, a)
+                print('r', r)
+                print('l', l)
+                print('s_new', s_new)
                 # a = training_environments[i].get_last_action() # due to MDP slip
                 agent_list[i].update_agent(s_new, a, r, l, learning_params)
 
@@ -171,6 +185,8 @@ def run_qlearning_task(
         if tester.stop_learning():
             break
 
+    
+
 
 def run_multi_agent_qlearning_test(
     agent_list: List[Agent],
@@ -237,8 +253,10 @@ def run_multi_agent_qlearning_test(
         r, l, s_team_next = testing_env.environment_step(s_team, a_team)
         for s_agent in s_team_next:
             (row, col) = testing_env.get_map().get_state_description(s_agent)
-            if (row, col) in testing_env.get_map().sinks:
-                stuck_counter += 1
+            #HERE
+            #SINK
+            # if (row, col) in testing_env.get_map().sinks:
+            #     stuck_counter += 1
         # testing_env.show_graphic(s_team_next)
 
         testing_reward = testing_reward + r

@@ -5,6 +5,9 @@ Defines label-based reward machines and probabilistic reward machines.
 import copy
 from abc import ABC, abstractmethod
 from typing import Dict, Iterable, List, Optional, Set, Tuple
+import matplotlib
+matplotlib.use('TkAgg',force=True)
+from matplotlib import pyplot as plt
 
 import gym
 import numpy as np

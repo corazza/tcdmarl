@@ -18,7 +18,7 @@ class Map:
         self.number_of_columns = self.env_settings["Nc"]
         self.initial_states: List[int] = self.env_settings["initial_states"]
         self.p = env_settings["p"]
-        self.sinks = self.env_settings["sinks"]
+        # self.sinks = self.env_settings["sinks"]
 
         # Set the available actions of all agents. For now all agents have same action set.
         self.actions = np.array(
@@ -58,7 +58,7 @@ class Map:
             self.forbidden_transitions.add((row + 1, col, Actions.UP))
             self.forbidden_transitions.add((row - 1, col, Actions.DOWN))
 
-        # one_way_door_location = self.env_settings['oneway']
+        one_way_door_location = self.env_settings['oneway']
         self.forbidden_transitions.add((5, 6, Actions.UP))
         self.forbidden_transitions.add((5, 8, Actions.UP))
         self.forbidden_transitions.add((7, 8, Actions.UP))
@@ -116,7 +116,16 @@ class RoutingState:
         self.b2_pressed: bool = b2_pressed
         self.b3_pressed: bool = b3_pressed
 
+class ButtonsState:
+    def __init__(
+        self, yellow_button_pushed: bool,  green_button_pushed: bool, red_button_pushed: bool
+    ):
 
+        self.yellow_button_pushed: bool = yellow_button_pushed
+        self.green_button_pushed: bool =  green_button_pushed
+        self.red_button_pushed: bool = red_button_pushed
+
+#HHHHHHHHHHHHHHHHHHHHHHHHHEEEEEEEEEEEEEEEEEEEEEEEEEEERRRRRRRRRRRRRRRRRRRRRRRRREEEEEEEEEEEEEEEEEE
 class RoutingMap(Map):
     """
     Case study 1: routing environment with two agents and a switch door.
@@ -272,6 +281,171 @@ class RoutingMap(Map):
             b2_pressed=b2_pressed,
             b3_pressed=b3_pressed,
         )
+    
+
+
+
+
+
+
+
+    ##############################################################
+class ButtonsMap(Map):
+    """
+    Case study 2:
+    """
+
+    def __init__(self, env_settings: Dict[str, Any]):
+        super().__init__(env_settings=env_settings)
+        self.yellow_tiles = self.env_settings["yellow_tiles"]
+        self.green_tiles = self.env_settings["green_tiles"]
+        self.red_tiles = self.env_settings["red_tiles"]
+        # self.blue_tiles = self.env_settings["blue_tiles"]
+        # self.pink_tiles = self.env_settings["pink_tiles"]
+
+    def get_next_state(
+        self, s: int, a: int, agent_id: int, buttons_state: ButtonsState
+    ) -> Tuple[int, int]:
+        """
+        Get the next state in the environment given action a is taken from state s.
+        Update the last action that was truly taken due to MDP slip.
+
+        Parameters
+        ----------
+        s : int
+            Index of the current state.
+        a : int
+            Action to be taken from state s.
+
+        Outputs
+        -------
+        s_next : int
+            Index of the next state.
+        last_action : int
+            Last action the agent truly took because of slip probability.
+        """
+        slip_p = [self.p, (1 - self.p) / 2, (1 - self.p) / 2]
+        check = random.random()  # TODO get rid of random
+
+        row, col = self.get_state_description(s)
+
+        stuck = False
+        # if (row, col) in self.sinks:
+        #     stuck = True
+
+        a_: int
+        if (check <= slip_p[0]) or (a == Actions.NONE.value):
+            a_ = a
+        elif (check > slip_p[0]) and (check <= (slip_p[0] + slip_p[1])):
+            if a == 0:
+                a_ = 3
+            elif a == 2:
+                a_ = 1
+            elif a == 3:
+                a_ = 2
+            else:
+                assert a == 1
+                a_ = 0
+        else:
+            if a == 0:
+                a_ = 1
+            elif a == 2:
+                a_ = 3
+            elif a == 3:
+                a_ = 0
+            else:
+                assert a == 1
+                a_ = 2
+
+        action_ = Actions(a_)
+        if (row, col, action_) not in self.forbidden_transitions:
+            if action_ == Actions.UP:
+                row -= 1
+            if action_ == Actions.DOWN:
+                row += 1
+            if action_ == Actions.LEFT:
+                col -= 1
+            if action_ == Actions.RIGHT:
+                col += 1
+
+        s_next = self.get_state_from_description(row, col)
+
+        # If the appropriate button hasn't yet been pressed, don't allow the agent into the colored region
+        if agent_id == 0:
+            if buttons_state.red_button_pushed:
+                if (row, col) in self.red_tiles:
+                    s_next = s
+        if agent_id == 1:
+            if buttons_state.yellow_button_pushed:
+                if (row, col) in self.yellow_tiles:
+                    s_next = s
+        if agent_id == 2:
+            if buttons_state.green_button_pushed:
+                if (row, col) in self.green_tiles:
+                    s_next = s
+        
+
+        # if agent_id == 0:
+        #     if (self.u == 0) or (self.u == 1) or (self.u == 2) or (self.u == 3) or (self.u == 4) or (self.u == 5):
+        #         if (row, col) in self.red_tiles:
+        #             s_next = s
+        # if agent_id == 1:
+        #     if (self.u == 0):
+        #         if (row, col) in self.yellow_tiles:
+        #             s_next = s
+        # if agent_id == 2:
+        #     if (self.u == 0) or (self.u == 1):
+        #         if (row, col) in self.green_tiles:
+        #             s_next = s
+
+        if stuck:
+            s_next = s
+
+        last_action = a_
+        return s_next, last_action
+
+    def compute_joint_state(self, u: int)  -> ButtonsState:
+        yellow_button_pushed: bool = False
+        green_button_pushed: bool = False
+        red_button_pushed: bool = False
+
+        if u in [1]:
+            yellow_button_pushed = True
+        if u in [2]:
+            green_button_pushed = True
+        if u in [3]:
+            red_button_pushed = True
+        
+        return ButtonsState(
+            yellow_button_pushed=yellow_button_pushed,
+            green_button_pushed=green_button_pushed,
+            red_button_pushed=red_button_pushed,
+        )
+
+    def compute_state(self, agent_id: int, u: int) -> ButtonsState:
+        yellow_button_pushed: bool = False
+        green_button_pushed: bool = False
+        red_button_pushed: bool = False
+
+        if agent_id == 0:
+            if u in [1, 3, 4, 5]:
+                yellow_button_pushed = True
+            if u in [2, 3, 4, 5]:
+                green_button_pushed = True
+                red_button_pushed = True
+        # else:
+        #     assert agent_id == 1
+        #     if u in [1, 3]:
+        #         green_button_pushed = True
+        #     if u in [2, 3]:
+        #         red_button_pushed = True
+
+        return ButtonsState(
+            yellow_button_pushed=yellow_button_pushed,
+            green_button_pushed=green_button_pushed,
+            red_button_pushed=red_button_pushed,
+        )
+
 
 
 class DecentralizedEnv(ABC):
