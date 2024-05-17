@@ -20,6 +20,25 @@
             },
             "pythonPath": "/home/zhexu/anaconda3/envs/prm-tlc/bin/python"
         },
+
+        {
+            "name": "Show MDP: buttons",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/tcdmarl/main.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--experiment",
+                "buttons",
+                "--show"
+            ],
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            },
+            "pythonPath": "/home/zhexu/anaconda3/envs/prm-tlc/bin/python"
+        },
+
+
         {
             "name": "Plot results",
             "type": "debugpy",

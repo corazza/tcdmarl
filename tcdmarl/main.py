@@ -359,7 +359,7 @@ def main(
         assert experiment in ALL_EXPERIMENT_NAMES
         #HERE
         if show:
-            tester = routing_config(
+            tester = buttons_config(
                 num_times=num_trials,
                 use_tlcd=tlcd,
                 step_unit_factor=step_unit_factor,

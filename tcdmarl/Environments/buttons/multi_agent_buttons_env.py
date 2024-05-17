@@ -503,30 +503,24 @@ class MultiAgentButtonsEnv(CentralizedEnv):  # TODO rename to CentralizedButtons
         for loc in self.map.env_settings["walls"]:
             display[loc] = -1
 
+
         special_cells = {
-            "B1": self.map.env_settings["B1"],
-            "B2": self.map.env_settings["B2"],
-            "B3": self.map.env_settings["B3"],
-            "K1": self.map.env_settings["K1"],
-            "F1": self.map.env_settings["F1"],
-            "F2": self.map.env_settings["F2"],
-            "K2": self.map.env_settings["K2"],
+            "yellow_button": self.map.env_settings["yellow_button"],
+            "green_button1": self.map.env_settings["green_button1"],
+            "green_button2": self.map.env_settings["green_button2"],
+            "red_button": self.map.env_settings["red_button"],
             "G": self.map.env_settings["goal_location"],
         }
 
         for label, loc in special_cells.items():
             display[loc] = 1
 
-        for loc in self.map.blue_tiles:
-            display[loc] = 3
-        for loc in self.map.orange_tiles:
+        for loc in self.map.red_tiles:
             display[loc] = 4
         for loc in self.map.green_tiles:
             display[loc] = 5
         for loc in self.map.yellow_tiles:
             display[loc] = 6
-        for loc in self.map.pink_tiles:
-            display[loc] = 7
 
         # Display the agents
         for i in range(self.num_agents):

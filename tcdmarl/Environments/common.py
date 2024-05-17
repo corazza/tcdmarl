@@ -408,15 +408,15 @@ class ButtonsMap(Map):
 
         # If the appropriate button hasn't yet been pressed, don't allow the agent into the colored region
         if agent_id == 0:
-            if buttons_state.red_button_pushed:
+            if not buttons_state.red_button_pushed:
                 if (row, col) in self.red_tiles:
                     s_next = s
         if agent_id == 1:
-            if buttons_state.yellow_button_pushed:
+            if not buttons_state.yellow_button_pushed:
                 if (row, col) in self.yellow_tiles:
                     s_next = s
         if agent_id == 2:
-            if buttons_state.green_button_pushed:
+            if not buttons_state.green_button_pushed:
                 if (row, col) in self.green_tiles:
                     s_next = s
 
@@ -427,18 +427,18 @@ class ButtonsMap(Map):
         return s_next, last_action
 
     def compute_joint_state(self, u: int) -> ButtonsState:
-        yellow_button_pushed: bool = True
-        green_button_pushed: bool = True
-        red_button_pushed: bool = True
+        yellow_button_pushed: bool = False
+        green_button_pushed: bool = False
+        red_button_pushed: bool = False
 
 
     
-        # if u in [1]:
-        #     yellow_button_pushed = True
-        # if u in [2]:
-        #     green_button_pushed = True
-        # if u in [3,4,5,6,7]:
-        #     red_button_pushed = True
+        if u in [1, 2, 3, 4, 5, 6, 7]:
+            yellow_button_pushed = True
+        if u in [2, 3 , 4, 5, 6, 7]:
+            green_button_pushed = True
+        if u in [6,7]:
+            red_button_pushed = True
         
         return ButtonsState(
             yellow_button_pushed=yellow_button_pushed,
@@ -447,22 +447,30 @@ class ButtonsMap(Map):
         )
 
     def compute_state(self, agent_id: int, u: int) -> ButtonsState:
-        yellow_button_pushed: bool = True
-        green_button_pushed: bool = True
-        red_button_pushed: bool = True
+        yellow_button_pushed: bool = False
+        green_button_pushed: bool = False
+        red_button_pushed: bool = False
 
-        # if agent_id == 0:
-        #     if u in [1]:
-        #         yellow_button_pushed = True
-        #     if u in [2, 3, 4, 5]:
-        #         green_button_pushed = True
-        #         red_button_pushed = True
-        # else:
-        #     assert agent_id == 1
-        #     if u in [1, 3]:
-        #         green_button_pushed = True
-        #     if u in [2, 3]:
-        #         red_button_pushed = True
+        if agent_id == 0:
+            if u in [1, 2, 3]:
+                yellow_button_pushed = True
+            if u in [2,3]:
+                red_button_pushed = True
+        elif agent_id == 1:
+            # assert agent_id == 1
+            if u in [1, 2,3,4]:
+                yellow_button_pushed = True
+            if u in [2,3,4]:
+                green_button_pushed = True
+            if u in [3,4]:
+                red_button_pushed = True
+        else:
+            if u in [1, 2, 3]:
+                green_button_pushed = True
+            if u in [2, 3]:
+                red_button_pushed = True
+            
+
 
         return ButtonsState(
             yellow_button_pushed=yellow_button_pushed,
