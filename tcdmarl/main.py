@@ -22,9 +22,10 @@ from tcdmarl.experiments.run_centralized_coordination_experiment import (
 )
 from tcdmarl.path_consts import RESULTS_DIR
 from tcdmarl.routing_config import routing_config
+from tcdmarl.buttons_config import buttons_config
 from tcdmarl.tester.tester import Tester
 
-
+import sys
 def save_results(collection: str, experiment: str, use_tlcd: bool, tester: Tester):
     """
     Save the results of the experiment to a file.
@@ -191,7 +192,7 @@ def run_experiment(
     assert experiment in ALL_EXPERIMENT_NAMES
 
     if experiment == "routing":
-        # Get test object from config script
+    # Get test object from config script
         tester = routing_config(
             num_times=num_trials,
             use_tlcd=use_tlcd,
@@ -203,9 +204,7 @@ def run_experiment(
             num_times=num_trials,
             show_print=True,
         )
-    else:
-        assert experiment == "centralized_routing"
-        # Get test object from config script
+    elif experiment == "centralized_routing":
         tester = routing_config(
             num_times=num_trials,
             use_tlcd=use_tlcd,
@@ -217,6 +216,34 @@ def run_experiment(
             num_times=tester.num_times,
             show_print=True,
         )
+    elif experiment == "buttons":
+        tester = buttons_config(
+            num_times=num_trials,
+            use_tlcd=use_tlcd,
+            step_unit_factor=step_unit_factor,
+        )
+        tester = run_multi_agent_experiment(
+            tester=tester,
+            num_agents=tester.num_agents,
+            num_times=num_trials,
+            show_print=True,
+        )
+    elif experiment == "centralized_buttons":
+        tester = buttons_config(
+            num_times=num_trials,
+            use_tlcd=use_tlcd,
+            step_unit_factor=step_unit_factor,
+        )
+        print('tester in main', tester)
+        tester = run_centralized_experiment(
+            tester=tester,
+            _num_agents=tester.num_agents,
+            num_times=tester.num_times,
+            show_print=True,
+        )
+    else:
+        raise ValueError(f"Unknown experiment type: {experiment}")
+
 
     # Save the results
     save_results(
@@ -232,6 +259,7 @@ def run_experiment(
         show_plot=show_plot,
         save_plot=True,
     )
+
 
     return tester
 
@@ -329,6 +357,7 @@ def main(
     else:
         assert not all_experiments
         assert experiment in ALL_EXPERIMENT_NAMES
+        #HERE
         if show:
             tester = routing_config(
                 num_times=num_trials,
@@ -338,6 +367,7 @@ def main(
             testing_env = create_centralized_environment(
                 tester, use_prm=False, tlcd=tester.tlcd
             )
+            # print('tester in main', tester)
             testing_env.show_graphic(testing_env.get_initial_team_state())
         else:
             print(f'Running experiment: "{experiment}" (use_tlcd={tlcd})')
@@ -349,7 +379,8 @@ def main(
                 show_plot=plot_results_after_experiment,
                 step_unit_factor=step_unit_factor,
             )
-
+# sys.stdout = open('t.txt', 'w')
+# sys.stderr = open('t.txt', 'w')
 
 if __name__ == "__main__":
     # pylint: disable=no-value-for-parameter

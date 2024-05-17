@@ -17,7 +17,8 @@
             ],
             "env": {
                 "PYTHONPATH": "${workspaceFolder}"
-            }
+            },
+            "pythonPath": "/home/zhexu/anaconda3/envs/prm-tlc/bin/python"
         },
         {
             "name": "Plot results",
@@ -31,7 +32,8 @@
             ],
             "env": {
                 "PYTHONPATH": "${workspaceFolder}"
-            }
+            },
+            "pythonPath": "/home/zhexu/anaconda3/envs/prm-tlc/bin/python"
         },
         {
             "name": "Run all experiments",
@@ -46,11 +48,12 @@
                 "--num-trials",
                 "10",
                 "--step-unit-factor",
-                "500",
+                "500"
             ],
             "env": {
                 "PYTHONPATH": "${workspaceFolder}"
-            }
+            },
+            "pythonPath": "/home/zhexu/anaconda3/envs/prm-tlc/bin/python"
         },
         {
             "name": "Routing (decentralized, TL-CD)",
@@ -68,11 +71,12 @@
                 "10",
                 "--plot-results-after-experiment",
                 "--step-unit-factor",
-                "100",
+                "100"
             ],
             "env": {
                 "PYTHONPATH": "${workspaceFolder}"
-            }
+            },
+            "pythonPath": "/home/zhexu/anaconda3/envs/prm-tlc/bin/python"
         },
         {
             "name": "Routing (decentralized, no TL-CD)",
@@ -89,11 +93,12 @@
                 "10",
                 "--plot-results-after-experiment",
                 "--step-unit-factor",
-                "100",
+                "100"
             ],
             "env": {
                 "PYTHONPATH": "${workspaceFolder}"
-            }
+            },
+            "pythonPath": "/home/zhexu/anaconda3/envs/prm-tlc/bin/python"
         },
         {
             "name": "Routing (centralized, TL-CD)",
@@ -111,11 +116,12 @@
                 "10",
                 "--plot-results-after-experiment",
                 "--step-unit-factor",
-                "1000",
+                "1000"
             ],
             "env": {
                 "PYTHONPATH": "${workspaceFolder}"
-            }
+            },
+            "pythonPath": "/home/zhexu/anaconda3/envs/prm-tlc/bin/python"
         },
         {
             "name": "Routing (centralized, no TL-CD)",
@@ -132,12 +138,35 @@
                 "10",
                 "--plot-results-after-experiment",
                 "--step-unit-factor",
-                "1000",
+                "1000"
             ],
             "env": {
                 "PYTHONPATH": "${workspaceFolder}"
-            }
+            },
+            "pythonPath": "/home/zhexu/anaconda3/envs/prm-tlc/bin/python"
         },
+        {
+            "name": "Buttons (decentralized, no TL-CD)",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/tcdmarl/main.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--collection",
+                "${input:collection}",
+                "--experiment",
+                "buttons",
+                "--num-trials",
+                "10",
+                // "--plot-results-after-experiment",
+                "--step-unit-factor",
+                "100"
+            ],
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            },
+            "pythonPath": "/home/zhexu/anaconda3/envs/prm-tlc/bin/python"
+        }
     ],
     "inputs": [
         {

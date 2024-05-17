@@ -9,6 +9,7 @@ import numpy as np
 from tcdmarl.Agent.agent import Agent
 from tcdmarl.Environments.common import DecentralizedEnv
 from tcdmarl.Environments.routing.routing_env import RoutingEnv
+from tcdmarl.Environments.buttons.buttons_env import ButtonsEnv
 from tcdmarl.experiments.common import create_centralized_environment
 from tcdmarl.tester.learning_params import LearningParameters
 from tcdmarl.tester.tester import Tester
@@ -22,6 +23,12 @@ def create_decentralized_environment(
         return RoutingEnv(
             agent_list[agent_id].rm_file, agent_id, tester.env_settings, tester.tlcd
         ).use_prm(tester.use_prm)
+    
+    elif tester.experiment == "buttons":
+        return ButtonsEnv(
+            agent_list[agent_id].rm_file, agent_id, tester.env_settings, tester.tlcd
+        ).use_prm(tester.use_prm)
+
     else:
         raise ValueError('experiment should be one of: "routing"')
 
@@ -80,8 +87,8 @@ def run_qlearning_task(
                 (row, col) = (
                     training_environments[i].get_map().get_state_description(s_new)
                 )
-                if (row, col) in training_environments[i].get_map().sinks:
-                    tester.add_training_stuck_step()
+                # if (row, col) in training_environments[i].get_map().sinks:
+                #     tester.add_training_stuck_step()
 
                 for u in agent_list[i].all_states:
                     if not (u == current_u) and not (
@@ -101,6 +108,7 @@ def run_qlearning_task(
                         agent_list[i].update_q_function(
                             s, s_new, u, u2, a, r, learning_params
                         )
+                        # print('state', s, 'action', a, 'reward', r, 'next_state', s_new)
 
         # If enough steps have elapsed, test and save the performance of the agents.
         if (
@@ -263,8 +271,8 @@ def run_multi_agent_qlearning_test(
         r, l, s_team_next = testing_env.environment_step(s_team, a_team)
         for s_agent in s_team_next:
             (row, col) = testing_env.get_map().get_state_description(s_agent)
-            if (row, col) in testing_env.get_map().sinks:
-                stuck_counter += 1
+            # if (row, col) in testing_env.get_map().sinks:
+            #     stuck_counter += 1
         # testing_env.show_graphic(s_team_next)
 
         testing_reward = testing_reward + r
@@ -354,6 +362,7 @@ def run_multi_agent_experiment(
 
         # This is instance is only used for extracting environment meta-info
         testing_env = create_centralized_environment(tester, use_prm=False, tlcd=None)
+        
         num_states = testing_env.get_map().get_num_states()
 
         # Create the a list of agents for this experiment

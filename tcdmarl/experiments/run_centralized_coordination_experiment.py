@@ -43,7 +43,7 @@ def run_qlearning_task(
     centralized_agent.initialize_reward_machine()
 
     num_steps = learning_params.max_timesteps_per_task
-
+    print('tester in run_qlearning_task', tester)
     env = create_centralized_environment(
         tester, use_prm=tester.use_prm, tlcd=tester.tlcd
     )

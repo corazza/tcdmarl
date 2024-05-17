@@ -6,7 +6,7 @@ SIMULATION_THRESH: float = 0.1
 # For agent synchronization
 SYNCHRONIZATION_THRESH: float = 0.3
 
-EXPERIMENT_NAMES: List[str] = ["routing"]
+EXPERIMENT_NAMES: List[str] = ["routing", "buttons"]
 
 ALL_EXPERIMENT_NAMES: List[str] = [
     name if i == 0 else "centralized_" + name
