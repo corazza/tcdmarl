@@ -185,6 +185,28 @@
                 "PYTHONPATH": "${workspaceFolder}"
             },
             "pythonPath": "/home/zhexu/anaconda3/envs/prm-tlc/bin/python"
+        },
+        {
+            "name": "Buttons (centralized, no TL-CD)",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/tcdmarl/main.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--collection",
+                "${input:collection}",
+                "--experiment",
+                "centralized_buttons",
+                "--num-trials",
+                "10",
+                "--plot-results-after-experiment",
+                "--step-unit-factor",
+                "1000"
+            ],
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            },
+            "pythonPath": "/home/zhexu/anaconda3/envs/prm-tlc/bin/python"
         }
     ],
     "inputs": [

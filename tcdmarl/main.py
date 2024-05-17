@@ -359,15 +359,24 @@ def main(
         assert experiment in ALL_EXPERIMENT_NAMES
         #HERE
         if show:
-            tester = buttons_config(
-                num_times=num_trials,
-                use_tlcd=tlcd,
-                step_unit_factor=step_unit_factor,
-            )
+            if experiment == 'buttons':
+                tester = buttons_config(
+                    num_times=num_trials,
+                    use_tlcd=tlcd,
+                    step_unit_factor=step_unit_factor,
+                )
+            elif experiment == 'routing':
+                tester = routing_config(
+                    num_times=num_trials,
+                    use_tlcd=tlcd,
+                    step_unit_factor=step_unit_factor,
+                )
+            else:
+                raise ValueError(f"Unknown environment type: {experiment}")
+
             testing_env = create_centralized_environment(
                 tester, use_prm=False, tlcd=tester.tlcd
             )
-            # print('tester in main', tester)
             testing_env.show_graphic(testing_env.get_initial_team_state())
         else:
             print(f'Running experiment: "{experiment}" (use_tlcd={tlcd})')
@@ -379,6 +388,7 @@ def main(
                 show_plot=plot_results_after_experiment,
                 step_unit_factor=step_unit_factor,
             )
+
 # sys.stdout = open('t.txt', 'w')
 # sys.stderr = open('t.txt', 'w')
 
