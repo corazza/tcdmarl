@@ -70,7 +70,7 @@ class ButtonsEnv(DecentralizedEnv):  # TODO rename to DecentralizedBUttonsEnv
         if not save_path in PRM_TLCD_MAP:
             self.prm = sparse_rm_to_prm(self.reward_machine)
             if self.tlcd is not None:
-                self.prm = self.prm.add_tlcd(self.tlcd)
+                self.prm = self.prm.add_tlcd(self.tlcd, Path(save_path).name)
             PRM_TLCD_MAP[save_path] = self.prm
         else:
             self.prm = copy.deepcopy(PRM_TLCD_MAP[save_path])
@@ -144,6 +144,12 @@ class ButtonsEnv(DecentralizedEnv):  # TODO rename to DecentralizedBUttonsEnv
         l: List[str] = []
 
         if self.agent_id == 0:
+            if (row, col) == self.map.env_settings["F1"]:
+                l.append("f")
+            if (row, col) == self.map.env_settings["F2"] and self.map.env_settings[
+                "enable_f2"
+            ]:
+                l.append("f")
             if _u == 0:
                 if (row, col) == self.map.env_settings["yellow_button"]:
                     l.append("by")

@@ -176,10 +176,10 @@
                 "--experiment",
                 "buttons",
                 "--num-trials",
-                "10",
-                // "--plot-results-after-experiment",
+                "1",
+                "--plot-results-after-experiment",
                 "--step-unit-factor",
-                "100"
+                "1000"
             ],
             "env": {
                 "PYTHONPATH": "${workspaceFolder}"
@@ -201,13 +201,36 @@
                 "10",
                 "--plot-results-after-experiment",
                 "--step-unit-factor",
+                "100"
+            ],
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            },
+            "pythonPath": "/home/zhexu/anaconda3/envs/prm-tlc/bin/python"
+        },
+        {
+            "name": "Buttons (decentralized, TL-CD)",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/tcdmarl/main.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--collection",
+                "${input:collection}",
+                "--tlcd",
+                "--experiment",
+                "buttons",
+                "--num-trials",
+                "1",
+                "--plot-results-after-experiment",
+                "--step-unit-factor",
                 "1000"
             ],
             "env": {
                 "PYTHONPATH": "${workspaceFolder}"
             },
             "pythonPath": "/home/zhexu/anaconda3/envs/prm-tlc/bin/python"
-        }
+        },
     ],
     "inputs": [
         {

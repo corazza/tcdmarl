@@ -18,7 +18,7 @@ class Map:
         self.number_of_columns = self.env_settings["Nc"]
         self.initial_states: List[int] = self.env_settings["initial_states"]
         self.p = env_settings["p"]
-        # self.sinks = self.env_settings["sinks"]
+        self.sinks = self.env_settings["sinks"]
 
         # Set the available actions of all agents. For now all agents have same action set.
         self.actions = np.array(
@@ -366,8 +366,8 @@ class ButtonsMap(Map):
         row, col = self.get_state_description(s)
 
         stuck = False
-        # if (row, col) in self.sinks:
-        #     stuck = True
+        if (row, col) in self.sinks:
+            stuck = True
 
         a_: int
         if (check <= slip_p[0]) or (a == Actions.NONE.value):

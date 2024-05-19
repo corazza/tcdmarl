@@ -69,7 +69,7 @@ def run_qlearning_task(
                 if not (u == current_u) and not (
                     u in centralized_agent.terminal_states
                 ):
-                    l = env.get_mdp_label(s, s_new, u)
+                    l = env.get_mdp_label(s, s_new, env.get_old_u(u))
                     r = 0
                     u_temp = u
                     u2 = u

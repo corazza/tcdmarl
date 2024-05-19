@@ -76,7 +76,7 @@ class MultiAgentButtonsEnv(CentralizedEnv):  # TODO rename to CentralizedButtons
         if not save_path in PRM_TLCD_MAP:
             self.prm = sparse_rm_to_prm(self.reward_machine)
             if self.tlcd is not None:
-                self.prm = self.prm.add_tlcd(self.tlcd)
+                self.prm = self.prm.add_tlcd(self.tlcd, Path(save_path).name)
             PRM_TLCD_MAP[save_path] = self.prm
         else:
             self.prm = copy.deepcopy(PRM_TLCD_MAP[save_path])
@@ -123,8 +123,10 @@ class MultiAgentButtonsEnv(CentralizedEnv):  # TODO rename to CentralizedButtons
             )
             self.last_action[i] = last_action
 
-        l = self.get_mdp_label(s, s_next, self.u)
+        l = self.get_mdp_label(s, s_next, self.get_old_u(self.u))
         r: int = 0
+
+        # row1, col1 = self.map.get_state_description(s_next[1])
 
         for e in l:
             # Get the new reward machine state and the reward of this step
@@ -230,6 +232,14 @@ class MultiAgentButtonsEnv(CentralizedEnv):  # TODO rename to CentralizedButtons
         row1, col1 = self.map.get_state_description(s_next[agent1])
         row2, col2 = self.map.get_state_description(s_next[agent2])
         row3, col3 = self.map.get_state_description(s_next[agent3])
+
+
+        if (row1, col1) == self.map.env_settings["F1"]:
+            l.append("f")
+        if (row1, col1) == self.map.env_settings["F2"] and self.map.env_settings[
+            "enable_f2"
+        ]:
+            l.append("f")
 
         if u == 0:
         # Now check if agents are on buttons
@@ -376,6 +386,7 @@ class MultiAgentButtonsEnv(CentralizedEnv):  # TODO rename to CentralizedButtons
 
         for i in range(self.num_agents):
             row, col = self.map.get_state_description(s[i])
+            
 
             if i == agent1:
                 if (row,col) == self.map.env_settings['yellow_button']:
@@ -384,6 +395,12 @@ class MultiAgentButtonsEnv(CentralizedEnv):  # TODO rename to CentralizedButtons
                     completed_options.append('g')
                 if s[i] == self.map.env_settings['initial_states'][i]:
                     completed_options.append('w1')
+                if (row, col) == self.map.env_settings["F1"]:
+                    completed_options.append("f")
+                if (row, col) == self.map.env_settings["F2"] and self.map.env_settings[
+                    "enable_f2"
+                ]:
+                    completed_options.append("f")
 
             elif i == agent2:
                 if (row, col) == self.map.env_settings['green_button1']:
@@ -510,6 +527,8 @@ class MultiAgentButtonsEnv(CentralizedEnv):  # TODO rename to CentralizedButtons
             "green_button2": self.map.env_settings["green_button2"],
             "red_button": self.map.env_settings["red_button"],
             "G": self.map.env_settings["goal_location"],
+            "F1": self.map.env_settings["F1"],
+            "F2": self.map.env_settings["F2"],
         }
 
         for label, loc in special_cells.items():

@@ -87,15 +87,14 @@ def run_qlearning_task(
                 (row, col) = (
                     training_environments[i].get_map().get_state_description(s_new)
                 )
-                # if (row, col) in training_environments[i].get_map().sinks:
-                #     tester.add_training_stuck_step()
+                if (row, col) in training_environments[i].get_map().sinks:
+                    tester.add_training_stuck_step()
 
                 for u in agent_list[i].all_states:
                     if not (u == current_u) and not (
                         u in agent_list[i].terminal_states
                     ):
                         l = training_environments[i].get_mdp_label(s, s_new, u)
-                        # print('l', l)
                         r = 0
                         u_temp = u
                         u2 = u
@@ -271,8 +270,8 @@ def run_multi_agent_qlearning_test(
         r, l, s_team_next = testing_env.environment_step(s_team, a_team)
         for s_agent in s_team_next:
             (row, col) = testing_env.get_map().get_state_description(s_agent)
-            # if (row, col) in testing_env.get_map().sinks:
-            #     stuck_counter += 1
+            if (row, col) in testing_env.get_map().sinks:
+                stuck_counter += 1
         # testing_env.show_graphic(s_team_next)
 
         testing_reward = testing_reward + r

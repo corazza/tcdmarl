@@ -74,11 +74,16 @@ def buttons_config(num_times: int, use_tlcd: bool, step_unit_factor: int) -> Tes
     env_settings['yellow_tiles'] = [(2,3), (2,4), (2,5), (2,6), (2,7), (2,8), (2,9)]
     env_settings['green_tiles'] = [(2,11), (3,11)]
     env_settings['red_tiles'] = [(11,7), (11,8)]
+    env_settings["F1"] = (10,3)
+    env_settings["F2"] = (10,3)
+    # env_settings["F1"] = (6, 0)
+    # env_settings["F2"] = (3, 1)
+    env_settings["enable_f2"] = False
 
     env_settings["p"] = 0.98
-    # env_settings["sinks"] = [env_settings["F1"], env_settings["K1"]]
-    # if env_settings["enable_f2"]:
-    #     env_settings["sinks"].append(env_settings["F2"])
+    env_settings["sinks"] = [env_settings["F1"]]
+    if env_settings["enable_f2"]:
+        env_settings["sinks"].append(env_settings["F2"])
 
     if use_tlcd:
         tlcd = dfa_paper_no_goal_after_flowers()

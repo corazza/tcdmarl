@@ -106,7 +106,7 @@ class CentralizedAgent:
         if not save_path in PRM_TLCD_MAP:
             self.prm = sparse_rm_to_prm(self.rm)
             if self.tlcd is not None:
-                self.prm = self.prm.add_tlcd(self.tlcd)
+                self.prm = self.prm.add_tlcd(self.tlcd, Path(save_path).name)
             PRM_TLCD_MAP[save_path] = self.prm
         else:
             self.prm = copy.deepcopy(PRM_TLCD_MAP[save_path])
