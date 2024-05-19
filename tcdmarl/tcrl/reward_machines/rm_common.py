@@ -3,6 +3,7 @@ Defines label-based reward machines and probabilistic reward machines.
 """
 
 import copy
+import pickle
 from abc import ABC, abstractmethod
 from typing import Dict, Iterable, List, Optional, Set, Tuple
 
@@ -11,6 +12,7 @@ import numpy as np
 from gym import spaces
 from tqdm import tqdm
 
+from tcdmarl.path_consts import WORK_DIR
 from tcdmarl.tcrl.regex.regex_compiler import generate_inputs
 from tcdmarl.tcrl.rl_common import RunConfig
 
@@ -289,7 +291,9 @@ class ProbabilisticRewardMachine(RewardMachine):
                 return next_state, next_reward, done
         assert False
 
-    def add_tlcd(self, causal_dfa: "CausalDFA") -> "ProbabilisticRewardMachine":
+    def add_tlcd(
+        self, causal_dfa: "CausalDFA", caching: str
+    ) -> "ProbabilisticRewardMachine":
         value_iteration_params: RunConfig = RunConfig(
             agent_name="----",
             total_timesteps=int(1e03),
@@ -314,10 +318,35 @@ class ProbabilisticRewardMachine(RewardMachine):
         b1 = prm_causal_product(b1, causal_dfa, scheme="reward_shaping")
         # b2 = prm_causal_product(b2, causal_dfa, scheme="reward_shaping")
 
-        print("Computing B1...")
-        state_potentials_b1, _state_action_potentials_b1 = get_rs_potential_new(
-            b1, value_iteration_params
-        )
+        # print("Computing B1...")
+        # state_potentials_b1, _state_action_potentials_b1 = get_rs_potential_new(
+        #     b1, value_iteration_params
+        # )
+
+        # Construct the path to the cache file
+        cache_file_path = WORK_DIR / f"{caching}.p"
+
+        # Check if the cache file exists
+        if cache_file_path.exists():
+            print("Loading B1 from cache...")
+            # Load the data from the cache file
+            with open(cache_file_path, "rb") as cache_file:
+                state_potentials_b1, _state_action_potentials_b1 = pickle.load(
+                    cache_file
+                )
+        else:
+            # Compute the function
+            print("Computing B1...")
+            state_potentials_b1, _state_action_potentials_b1 = get_rs_potential_new(
+                b1, value_iteration_params
+            )
+
+            # Save the result to the cache file
+            with open(cache_file_path, "wb") as cache_file:
+                pickle.dump(
+                    (state_potentials_b1, _state_action_potentials_b1), cache_file
+                )
+
         # print("Computing B2...")
         # state_potentials_b2, _state_action_potentials_b2 = get_rs_potential_new(
         #     b2, value_iteration_params
