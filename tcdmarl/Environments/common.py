@@ -462,12 +462,12 @@ class ButtonsMap(Map):
                 yellow_button_pushed = True
             if u in [2,3,4]:
                 green_button_pushed = True
-            if u in [3,4]:
+            if u in [4]:
                 red_button_pushed = True
         else:
             if u in [1, 2, 3]:
                 green_button_pushed = True
-            if u in [2, 3]:
+            if u in [3]:
                 red_button_pushed = True
             
 

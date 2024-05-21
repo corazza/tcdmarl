@@ -146,10 +146,10 @@ class ButtonsEnv(DecentralizedEnv):  # TODO rename to DecentralizedBUttonsEnv
         if self.agent_id == 0:
             if (row, col) == self.map.env_settings["F1"]:
                 l.append("f")
-            if (row, col) == self.map.env_settings["F2"] and self.map.env_settings[
-                "enable_f2"
-            ]:
-                l.append("f")
+            # if (row, col) == self.map.env_settings["F2"] and self.map.env_settings[
+            #     "enable_f2"
+            # ]:
+            #     l.append("f")
             if _u == 0:
                 if (row, col) == self.map.env_settings["yellow_button"]:
                     l.append("by")

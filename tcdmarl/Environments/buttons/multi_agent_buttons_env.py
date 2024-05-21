@@ -236,10 +236,10 @@ class MultiAgentButtonsEnv(CentralizedEnv):  # TODO rename to CentralizedButtons
 
         if (row1, col1) == self.map.env_settings["F1"]:
             l.append("f")
-        if (row1, col1) == self.map.env_settings["F2"] and self.map.env_settings[
-            "enable_f2"
-        ]:
-            l.append("f")
+        # if (row1, col1) == self.map.env_settings["F2"] and self.map.env_settings[
+        #     "enable_f2"
+        # ]:
+        #     l.append("f")
 
         if u == 0:
         # Now check if agents are on buttons
