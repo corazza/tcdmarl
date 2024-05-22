@@ -93,7 +93,6 @@
             "env": {
                 "PYTHONPATH": "${workspaceFolder}"
             },
-            // "pythonPath": "/home/zhexu/anaconda3/envs/prm-tlc/bin/python"
         },
         {
             "name": "Routing (decentralized, no TL-CD)",
@@ -115,7 +114,6 @@
             "env": {
                 "PYTHONPATH": "${workspaceFolder}"
             },
-            // "pythonPath": "/home/zhexu/anaconda3/envs/prm-tlc/bin/python"
         },
         {
             "name": "Routing (centralized, TL-CD)",
@@ -138,7 +136,6 @@
             "env": {
                 "PYTHONPATH": "${workspaceFolder}"
             },
-            // "pythonPath": "/home/zhexu/anaconda3/envs/prm-tlc/bin/python"
         },
         {
             "name": "Routing (centralized, no TL-CD)",
@@ -160,7 +157,6 @@
             "env": {
                 "PYTHONPATH": "${workspaceFolder}"
             },
-            // "pythonPath": "/home/zhexu/anaconda3/envs/prm-tlc/bin/python"
         },
         {
             "name": "Buttons (decentralized, TL-CD)",
@@ -183,7 +179,6 @@
             "env": {
                 "PYTHONPATH": "${workspaceFolder}"
             },
-            // "pythonPath": "/home/zhexu/anaconda3/envs/prm-tlc/bin/python"
         },
         {
             "name": "Buttons (decentralized, no TL-CD)",
@@ -205,7 +200,6 @@
             "env": {
                 "PYTHONPATH": "${workspaceFolder}"
             },
-            // "pythonPath": "/home/zhexu/anaconda3/envs/prm-tlc/bin/python"
         },
         {
             "name": "Buttons (centralized, TL-CD)",
@@ -228,7 +222,6 @@
             "env": {
                 "PYTHONPATH": "${workspaceFolder}"
             },
-            // "pythonPath": "/home/zhexu/anaconda3/envs/prm-tlc/bin/python"
         },
         {
             "name": "Buttons (centralized, no TL-CD)",
@@ -250,7 +243,6 @@
             "env": {
                 "PYTHONPATH": "${workspaceFolder}"
             },
-            // "pythonPath": "/home/zhexu/anaconda3/envs/prm-tlc/bin/python"
         },
     ],
     "inputs": [
