@@ -13,8 +13,10 @@ import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib.ticker import FuncFormatter, MaxNLocator
 
+from tcdmarl.buttons_config import buttons_config
 from tcdmarl.consts import ALL_EXPERIMENT_NAMES
 from tcdmarl.defaults import DEFAULT_NUM_SEPARATE_TRIALS, DEFAULT_STEP_UNIT_FACTOR
+from tcdmarl.Environments.buttons.multi_agent_buttons_env import play
 from tcdmarl.experiments.common import create_centralized_environment
 from tcdmarl.experiments.dqprm import run_multi_agent_experiment
 from tcdmarl.experiments.run_centralized_coordination_experiment import (
@@ -22,10 +24,9 @@ from tcdmarl.experiments.run_centralized_coordination_experiment import (
 )
 from tcdmarl.path_consts import RESULTS_DIR
 from tcdmarl.routing_config import routing_config
-from tcdmarl.buttons_config import buttons_config
 from tcdmarl.tester.tester import Tester
 
-import sys
+
 def save_results(collection: str, experiment: str, use_tlcd: bool, tester: Tester):
     """
     Save the results of the experiment to a file.
@@ -192,7 +193,7 @@ def run_experiment(
     assert experiment in ALL_EXPERIMENT_NAMES
 
     if experiment == "routing":
-    # Get test object from config script
+        # Get test object from config script
         tester = routing_config(
             num_times=num_trials,
             use_tlcd=use_tlcd,
@@ -234,7 +235,7 @@ def run_experiment(
             use_tlcd=use_tlcd,
             step_unit_factor=step_unit_factor,
         )
-        print('tester in main', tester)
+        print("tester in main", tester)
         tester = run_centralized_experiment(
             tester=tester,
             _num_agents=tester.num_agents,
@@ -243,7 +244,6 @@ def run_experiment(
         )
     else:
         raise ValueError(f"Unknown experiment type: {experiment}")
-
 
     # Save the results
     save_results(
@@ -259,7 +259,6 @@ def run_experiment(
         show_plot=show_plot,
         save_plot=True,
     )
-
 
     return tester
 
@@ -357,15 +356,15 @@ def main(
     else:
         assert not all_experiments
         assert experiment in ALL_EXPERIMENT_NAMES
-        #HERE
+        # HERE
         if show:
-            if experiment == 'buttons':
+            if experiment == "buttons":
                 tester = buttons_config(
                     num_times=num_trials,
                     use_tlcd=tlcd,
                     step_unit_factor=step_unit_factor,
                 )
-            elif experiment == 'routing':
+            elif experiment == "routing":
                 tester = routing_config(
                     num_times=num_trials,
                     use_tlcd=tlcd,
@@ -375,9 +374,10 @@ def main(
                 raise ValueError(f"Unknown environment type: {experiment}")
 
             testing_env = create_centralized_environment(
-                tester, use_prm=False, tlcd=tester.tlcd
+                tester, use_prm=True, tlcd=tester.tlcd
             )
             testing_env.show_graphic(testing_env.get_initial_team_state())
+            # play(tester, testing_env)
         else:
             print(f'Running experiment: "{experiment}" (use_tlcd={tlcd})')
             run_experiment(
@@ -389,9 +389,11 @@ def main(
                 step_unit_factor=step_unit_factor,
             )
 
+
 # sys.stdout = open('t.txt', 'w')
 # sys.stderr = open('t.txt', 'w')
 
 if __name__ == "__main__":
     # pylint: disable=no-value-for-parameter
+
     main()

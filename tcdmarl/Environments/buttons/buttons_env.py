@@ -6,10 +6,11 @@ import numpy as np
 from numpy import int32
 from numpy.typing import NDArray
 
-from tcdmarl.consts import SYNCHRONIZATION_THRESH
-from tcdmarl.Environments.common import STR_TO_ACTION, DecentralizedEnv, ButtonsMap #HERE
-from tcdmarl.reward_machines.sparse_reward_machine import SparseRewardMachine
 from tcdmarl.buttons_config import buttons_config
+from tcdmarl.consts import SYNCHRONIZATION_THRESH
+from tcdmarl.Environments.common import ButtonsMap  # HERE
+from tcdmarl.Environments.common import STR_TO_ACTION, DecentralizedEnv
+from tcdmarl.reward_machines.sparse_reward_machine import SparseRewardMachine
 from tcdmarl.shared_mem import PRM_TLCD_MAP
 from tcdmarl.tcrl.reward_machines.rm_common import CausalDFA, ProbabilisticRewardMachine
 from tcdmarl.tcrl.utils import sparse_rm_to_prm
@@ -114,7 +115,7 @@ class ButtonsEnv(DecentralizedEnv):  # TODO rename to DecentralizedBUttonsEnv
         )
         self.last_action = last_action
 
-        l = self.get_mdp_label(s, s_next, self.u)
+        l = self.get_mdp_label(s, s_next, self.get_old_u(self.u))
         r: int = 0
 
         for e in l:
@@ -144,12 +145,6 @@ class ButtonsEnv(DecentralizedEnv):  # TODO rename to DecentralizedBUttonsEnv
         l: List[str] = []
 
         if self.agent_id == 0:
-            if (row, col) == self.map.env_settings["F1"]:
-                l.append("f")
-            # if (row, col) == self.map.env_settings["F2"] and self.map.env_settings[
-            #     "enable_f2"
-            # ]:
-            #     l.append("f")
             if _u == 0:
                 if (row, col) == self.map.env_settings["yellow_button"]:
                     l.append("by")
@@ -160,6 +155,12 @@ class ButtonsEnv(DecentralizedEnv):  # TODO rename to DecentralizedBUttonsEnv
                 if (row, col) == self.map.env_settings["goal_location"]:
                     l.append("g")
         elif self.agent_id == 1:
+            if (row, col) == self.map.env_settings["F1"]:
+                l.append("f")
+            if (row, col) == self.map.env_settings["F2"] and self.map.env_settings[
+                "enable_f2"
+            ]:
+                l.append("f")
             if _u == 0:
                 if np.random.random() <= SYNCHRONIZATION_THRESH:
                     l.append("by")
@@ -169,25 +170,25 @@ class ButtonsEnv(DecentralizedEnv):  # TODO rename to DecentralizedBUttonsEnv
                 l.append("bg2")
             if _u == 2 and (row, col) == self.map.env_settings["red_button"]:
                 l.append("a2br")
-            if _u == 3: 
-                if not((row,col) == self.map.env_settings['red_button']):
-                    l.append('a2lr')
+            if _u == 3:
+                if not ((row, col) == self.map.env_settings["red_button"]):
+                    l.append("a2lr")
                 elif np.random.random() <= SYNCHRONIZATION_THRESH:
-                    l.append('br')
+                    l.append("br")
 
         elif self.agent_id == 2:
             if _u == 0:
                 if np.random.random() <= SYNCHRONIZATION_THRESH:
-                    l.append('bg1')
+                    l.append("bg1")
                 if np.random.random() <= SYNCHRONIZATION_THRESH:
-                    l.append('bg2')
-            if _u == 1 and (row,col) == self.map.env_settings['red_button']:
-                l.append('a3br')
-            if _u == 2: 
-                if not((row,col) == self.map.env_settings['red_button']):
-                    l.append('a3lr')
+                    l.append("bg2")
+            if _u == 1 and (row, col) == self.map.env_settings["red_button"]:
+                l.append("a3br")
+            if _u == 2:
+                if not ((row, col) == self.map.env_settings["red_button"]):
+                    l.append("a3lr")
                 elif np.random.random() <= SYNCHRONIZATION_THRESH:
-                    l.append('br')
+                    l.append("br")
 
         return l
 

@@ -18,9 +18,8 @@
             "env": {
                 "PYTHONPATH": "${workspaceFolder}"
             },
-            "pythonPath": "/home/zhexu/anaconda3/envs/prm-tlc/bin/python"
+            // "pythonPath": "/home/zhexu/anaconda3/envs/prm-tlc/bin/python"
         },
-
         {
             "name": "Show MDP: buttons",
             "type": "debugpy",
@@ -30,15 +29,14 @@
             "args": [
                 "--experiment",
                 "buttons",
+                "--tlcd",
                 "--show"
             ],
             "env": {
                 "PYTHONPATH": "${workspaceFolder}"
             },
-            "pythonPath": "/home/zhexu/anaconda3/envs/prm-tlc/bin/python"
+            // "pythonPath": "/home/zhexu/anaconda3/envs/prm-tlc/bin/python"
         },
-
-
         {
             "name": "Plot results",
             "type": "debugpy",
@@ -52,7 +50,7 @@
             "env": {
                 "PYTHONPATH": "${workspaceFolder}"
             },
-            "pythonPath": "/home/zhexu/anaconda3/envs/prm-tlc/bin/python"
+            // "pythonPath": "/home/zhexu/anaconda3/envs/prm-tlc/bin/python"
         },
         {
             "name": "Run all experiments",
@@ -72,7 +70,7 @@
             "env": {
                 "PYTHONPATH": "${workspaceFolder}"
             },
-            "pythonPath": "/home/zhexu/anaconda3/envs/prm-tlc/bin/python"
+            // "pythonPath": "/home/zhexu/anaconda3/envs/prm-tlc/bin/python"
         },
         {
             "name": "Routing (decentralized, TL-CD)",
@@ -95,7 +93,7 @@
             "env": {
                 "PYTHONPATH": "${workspaceFolder}"
             },
-            "pythonPath": "/home/zhexu/anaconda3/envs/prm-tlc/bin/python"
+            // "pythonPath": "/home/zhexu/anaconda3/envs/prm-tlc/bin/python"
         },
         {
             "name": "Routing (decentralized, no TL-CD)",
@@ -117,7 +115,7 @@
             "env": {
                 "PYTHONPATH": "${workspaceFolder}"
             },
-            "pythonPath": "/home/zhexu/anaconda3/envs/prm-tlc/bin/python"
+            // "pythonPath": "/home/zhexu/anaconda3/envs/prm-tlc/bin/python"
         },
         {
             "name": "Routing (centralized, TL-CD)",
@@ -140,7 +138,7 @@
             "env": {
                 "PYTHONPATH": "${workspaceFolder}"
             },
-            "pythonPath": "/home/zhexu/anaconda3/envs/prm-tlc/bin/python"
+            // "pythonPath": "/home/zhexu/anaconda3/envs/prm-tlc/bin/python"
         },
         {
             "name": "Routing (centralized, no TL-CD)",
@@ -162,7 +160,30 @@
             "env": {
                 "PYTHONPATH": "${workspaceFolder}"
             },
-            "pythonPath": "/home/zhexu/anaconda3/envs/prm-tlc/bin/python"
+            // "pythonPath": "/home/zhexu/anaconda3/envs/prm-tlc/bin/python"
+        },
+        {
+            "name": "Buttons (decentralized, TL-CD)",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/tcdmarl/main.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--collection",
+                "${input:collection}",
+                "--tlcd",
+                "--experiment",
+                "buttons",
+                "--num-trials",
+                "10",
+                "--plot-results-after-experiment",
+                "--step-unit-factor",
+                "200"
+            ],
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            },
+            // "pythonPath": "/home/zhexu/anaconda3/envs/prm-tlc/bin/python"
         },
         {
             "name": "Buttons (decentralized, no TL-CD)",
@@ -176,7 +197,30 @@
                 "--experiment",
                 "buttons",
                 "--num-trials",
-                "1",
+                "10",
+                "--plot-results-after-experiment",
+                "--step-unit-factor",
+                "200"
+            ],
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            },
+            // "pythonPath": "/home/zhexu/anaconda3/envs/prm-tlc/bin/python"
+        },
+        {
+            "name": "Buttons (centralized, TL-CD)",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/tcdmarl/main.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--collection",
+                "${input:collection}",
+                "--tlcd",
+                "--experiment",
+                "centralized_buttons",
+                "--num-trials",
+                "10",
                 "--plot-results-after-experiment",
                 "--step-unit-factor",
                 "100"
@@ -184,7 +228,7 @@
             "env": {
                 "PYTHONPATH": "${workspaceFolder}"
             },
-            "pythonPath": "/home/zhexu/anaconda3/envs/prm-tlc/bin/python"
+            // "pythonPath": "/home/zhexu/anaconda3/envs/prm-tlc/bin/python"
         },
         {
             "name": "Buttons (centralized, no TL-CD)",
@@ -206,30 +250,7 @@
             "env": {
                 "PYTHONPATH": "${workspaceFolder}"
             },
-            "pythonPath": "/home/zhexu/anaconda3/envs/prm-tlc/bin/python"
-        },
-        {
-            "name": "Buttons (decentralized, TL-CD)",
-            "type": "debugpy",
-            "request": "launch",
-            "program": "${workspaceFolder}/tcdmarl/main.py",
-            "console": "integratedTerminal",
-            "args": [
-                "--collection",
-                "${input:collection}",
-                "--tlcd",
-                "--experiment",
-                "buttons",
-                "--num-trials",
-                "1",
-                "--plot-results-after-experiment",
-                "--step-unit-factor",
-                "100"
-            ],
-            "env": {
-                "PYTHONPATH": "${workspaceFolder}"
-            },
-            "pythonPath": "/home/zhexu/anaconda3/envs/prm-tlc/bin/python"
+            // "pythonPath": "/home/zhexu/anaconda3/envs/prm-tlc/bin/python"
         },
     ],
     "inputs": [

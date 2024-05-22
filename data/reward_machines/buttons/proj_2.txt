@@ -6,3 +6,4 @@
 (3, 2, 'a2lr', 0) # Agent 2 leaves red button prematurely
 (3, 4, 'br', 1) # Red button is successfully activated
 (4, 4, 'True', 0) # State 4 is an absorbing state
+['f'] # additional events

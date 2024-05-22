@@ -8,12 +8,13 @@ import numpy as np
 from numpy import int32
 from numpy.typing import NDArray
 
-from tcdmarl.Environments.common import STR_TO_ACTION, CentralizedEnv, ButtonsMap
-from tcdmarl.reward_machines.sparse_reward_machine import SparseRewardMachine
 from tcdmarl.buttons_config import buttons_config
+from tcdmarl.Environments.common import STR_TO_ACTION, ButtonsMap, CentralizedEnv
+from tcdmarl.reward_machines.sparse_reward_machine import SparseRewardMachine
 from tcdmarl.shared_mem import PRM_TLCD_MAP
 from tcdmarl.tcrl.reward_machines.rm_common import CausalDFA, ProbabilisticRewardMachine
 from tcdmarl.tcrl.utils import sparse_rm_to_prm
+from tcdmarl.tester.tester import Tester
 
 
 class MultiAgentButtonsEnv(CentralizedEnv):  # TODO rename to CentralizedButtonsEnv
@@ -233,7 +234,6 @@ class MultiAgentButtonsEnv(CentralizedEnv):  # TODO rename to CentralizedButtons
         row2, col2 = self.map.get_state_description(s_next[agent2])
         row3, col3 = self.map.get_state_description(s_next[agent3])
 
-
         if (row1, col1) == self.map.env_settings["F1"]:
             l.append("f")
         # if (row1, col1) == self.map.env_settings["F2"] and self.map.env_settings[
@@ -242,41 +242,52 @@ class MultiAgentButtonsEnv(CentralizedEnv):  # TODO rename to CentralizedButtons
         #     l.append("f")
 
         if u == 0:
-        # Now check if agents are on buttons
-            if not ((row2, col2) in self.map.yellow_tiles) and (row1,col1) == self.map.env_settings['yellow_button']:
-                l.append('by')
+            # Now check if agents are on buttons
+            if (
+                not ((row2, col2) in self.map.yellow_tiles)
+                and (row1, col1) == self.map.env_settings["yellow_button"]
+            ):
+                l.append("by")
         if u == 1:
-            if not ((row3, col3) in self.map.green_tiles) and (row2, col2) == self.map.env_settings['green_button1']:
+            if (
+                not ((row3, col3) in self.map.green_tiles)
+                and (row2, col2) == self.map.env_settings["green_button1"]
+            ):
                 # print('L in line 385:', 'hi1')
-                l.append('bg1')
-            if not ((row3, col3) in self.map.green_tiles) and (row2, col2) == self.map.env_settings['green_button2']:
-                l.append('bg2')
+                l.append("bg1")
+            if (
+                not ((row3, col3) in self.map.green_tiles)
+                and (row2, col2) == self.map.env_settings["green_button2"]
+            ):
+                l.append("bg2")
         if u == 2:
-            if (row2, col2) == self.map.env_settings['red_button']:
-                l.append('a2br')
-            if (row3, col3) == self.map.env_settings['red_button']:
-                l.append('a3br')
+            if (row2, col2) == self.map.env_settings["red_button"]:
+                l.append("a2br")
+            if (row3, col3) == self.map.env_settings["red_button"]:
+                l.append("a3br")
         if u == 3:
-            if not ((row2, col2) == self.map.env_settings['red_button']):
-                l.append('a2lr')
-            if (row3, col3) == self.map.env_settings['red_button']:
-                l.append('a3br')
+            if not ((row2, col2) == self.map.env_settings["red_button"]):
+                l.append("a2lr")
+            if (row3, col3) == self.map.env_settings["red_button"]:
+                l.append("a3br")
         if u == 4:
-            if (row2, col2) == self.map.env_settings['red_button']:
-                l.append('a2br')
-            if not ((row3, col3) == self.map.env_settings['red_button']):
-                l.append('a3lr')
+            if (row2, col2) == self.map.env_settings["red_button"]:
+                l.append("a2br")
+            if not ((row3, col3) == self.map.env_settings["red_button"]):
+                l.append("a3lr")
         if u == 5:
-            if ((row2, col2) == self.map.env_settings['red_button']) and ((row3, col3) == self.map.env_settings['red_button']):
-                l.append('br')
-            if not ((row2, col2) == self.map.env_settings['red_button']):
-                l.append('a2lr')
-            if not ((row3, col3) == self.map.env_settings['red_button']):
-                l.append('a3lr')
+            if ((row2, col2) == self.map.env_settings["red_button"]) and (
+                (row3, col3) == self.map.env_settings["red_button"]
+            ):
+                l.append("br")
+            if not ((row2, col2) == self.map.env_settings["red_button"]):
+                l.append("a2lr")
+            if not ((row3, col3) == self.map.env_settings["red_button"]):
+                l.append("a3lr")
         if u == 6:
             # Check if agent 1 has reached the goal
-            if (row1, col1) == self.map.env_settings['goal_location']:
-                l.append('g')
+            if (row1, col1) == self.map.env_settings["goal_location"]:
+                l.append("g")
 
         return l
 
@@ -386,15 +397,14 @@ class MultiAgentButtonsEnv(CentralizedEnv):  # TODO rename to CentralizedButtons
 
         for i in range(self.num_agents):
             row, col = self.map.get_state_description(s[i])
-            
 
             if i == agent1:
-                if (row,col) == self.map.env_settings['yellow_button']:
-                    completed_options.append('by')
-                if (row, col) == self.map.env_settings['goal_location']:
-                    completed_options.append('g')
-                if s[i] == self.map.env_settings['initial_states'][i]:
-                    completed_options.append('w1')
+                if (row, col) == self.map.env_settings["yellow_button"]:
+                    completed_options.append("by")
+                if (row, col) == self.map.env_settings["goal_location"]:
+                    completed_options.append("g")
+                if s[i] == self.map.env_settings["initial_states"][i]:
+                    completed_options.append("w1")
                 if (row, col) == self.map.env_settings["F1"]:
                     completed_options.append("f")
                 if (row, col) == self.map.env_settings["F2"] and self.map.env_settings[
@@ -403,21 +413,21 @@ class MultiAgentButtonsEnv(CentralizedEnv):  # TODO rename to CentralizedButtons
                     completed_options.append("f")
 
             elif i == agent2:
-                if (row, col) == self.map.env_settings['green_button1']:
-                    completed_options.append('bg1')
-                if (row, col) == self.map.env_settings['green_button2']:
-                    completed_options.append('bg2')
-                if (row, col) == self.map.env_settings['red_button']:
-                    completed_options.append('a2br')
-                if s[i] == self.map.env_settings['initial_states'][i]:
-                    completed_options.append('w2')
+                if (row, col) == self.map.env_settings["green_button1"]:
+                    completed_options.append("bg1")
+                if (row, col) == self.map.env_settings["green_button2"]:
+                    completed_options.append("bg2")
+                if (row, col) == self.map.env_settings["red_button"]:
+                    completed_options.append("a2br")
+                if s[i] == self.map.env_settings["initial_states"][i]:
+                    completed_options.append("w2")
 
             elif i == agent3:
-                if (row, col) == self.map.env_settings['red_button']:
-                    completed_options.append('a3br')
-                if s[i] == self.map.env_settings['initial_states'][i]:
-                    completed_options.append('w3')
-        
+                if (row, col) == self.map.env_settings["red_button"]:
+                    completed_options.append("a3br")
+                if s[i] == self.map.env_settings["initial_states"][i]:
+                    completed_options.append("w3")
+
         return completed_options
 
     def get_meta_state(self, _agent_id: int):
@@ -520,7 +530,6 @@ class MultiAgentButtonsEnv(CentralizedEnv):  # TODO rename to CentralizedButtons
         for loc in self.map.env_settings["walls"]:
             display[loc] = -1
 
-
         special_cells = {
             "yellow_button": self.map.env_settings["yellow_button"],
             "green_button1": self.map.env_settings["green_button1"],
@@ -591,22 +600,18 @@ class MultiAgentButtonsEnv(CentralizedEnv):  # TODO rename to CentralizedButtons
         plt.show()  # type: ignore
 
 
-def play():
-    tester = buttons_config(num_times=0)
-
+def play(tester: Tester, game: MultiAgentButtonsEnv):
     env_settings = tester.env_settings
     env_settings["p"] = 1.0
 
     num_agents: int = tester.num_agents
-
-    game = MultiAgentButtonsEnv(tester.rm_test_file, env_settings)
 
     s = game.get_initial_team_state()
     print(s)
 
     while True:
         # Showing game
-        game.show(s)
+        game.show_graphic(s)
 
         # Getting action
         a = np.full(num_agents, -1, dtype=int)
@@ -630,7 +635,9 @@ def play():
         print("Label: ", l)
         print("Reward: ", r)
         print("RM state: ", game.u)
-        print("Meta state: ", game.get_meta_state(0))
+        print("Old u: ", game.get_old_u(game.u))
+        print(f"ButtonsState: {game.map.compute_joint_state(game.get_old_u(game.u))}")
+        # print("Meta state: ", game.get_meta_state(0))
         print("---------------------")
 
         if game.reward_machine.is_terminal_state(game.u):  # Game Over

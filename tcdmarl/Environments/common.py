@@ -59,9 +59,8 @@ class Map:
             self.forbidden_transitions.add((row - 1, col, Actions.DOWN))
 
         # one_way_door_location = self.env_settings['oneway']
-        self.forbidden_transitions.add((5, 6, Actions.UP))
-        self.forbidden_transitions.add((5, 8, Actions.UP))
-        self.forbidden_transitions.add((7, 8, Actions.UP))
+        for row, col in self.env_settings["oneway"]:
+            self.forbidden_transitions.add((row, col, Actions.UP))
 
     def get_num_states(self) -> int:
         return self.num_states
@@ -131,14 +130,17 @@ class RoutingState:
 
     def __repr__(self) -> str:
         return self.__str__()
-    
+
 
 class ButtonsState:
     def __init__(
-        self, yellow_button_pushed: bool,  green_button_pushed: bool, red_button_pushed: bool
+        self,
+        yellow_button_pushed: bool,
+        green_button_pushed: bool,
+        red_button_pushed: bool,
     ):
         self.yellow_button_pushed: bool = yellow_button_pushed
-        self.green_button_pushed: bool =  green_button_pushed
+        self.green_button_pushed: bool = green_button_pushed
         self.red_button_pushed: bool = red_button_pushed
 
     def __eq__(self, other: Any) -> bool:
@@ -152,10 +154,11 @@ class ButtonsState:
 
     def __str__(self) -> str:
         return (
-                    f"Yellow Button Pushed: {self.yellow_button_pushed}, "
-                    f"Green Button Pushed: {self.green_button_pushed}, "
-                    f"Red Button Pushed: {self.red_button_pushed}"
-                )
+            f"Yellow Button Pushed: {self.yellow_button_pushed}, "
+            f"Green Button Pushed: {self.green_button_pushed}, "
+            f"Red Button Pushed: {self.red_button_pushed}"
+        )
+
     def __repr__(self) -> str:
         return self.__str__()
 
@@ -326,7 +329,6 @@ class RoutingMap(Map):
         )
 
 
-
 class ButtonsMap(Map):
     """
     Case study 2: buttons environment with three agents.
@@ -337,7 +339,6 @@ class ButtonsMap(Map):
         self.yellow_tiles = self.env_settings["yellow_tiles"]
         self.green_tiles = self.env_settings["green_tiles"]
         self.red_tiles = self.env_settings["red_tiles"]
-
 
     def get_next_state(
         self, s: int, a: int, agent_id: int, buttons_state: ButtonsState
@@ -431,15 +432,13 @@ class ButtonsMap(Map):
         green_button_pushed: bool = False
         red_button_pushed: bool = False
 
-
-    
         if u in [1, 2, 3, 4, 5, 6, 7]:
             yellow_button_pushed = True
-        if u in [2, 3 , 4, 5, 6, 7]:
+        if u in [2, 3, 4, 5, 6, 7]:
             green_button_pushed = True
-        if u in [6,7]:
+        if u in [6, 7]:
             red_button_pushed = True
-        
+
         return ButtonsState(
             yellow_button_pushed=yellow_button_pushed,
             green_button_pushed=green_button_pushed,
@@ -454,13 +453,13 @@ class ButtonsMap(Map):
         if agent_id == 0:
             if u in [1, 2, 3]:
                 yellow_button_pushed = True
-            if u in [2,3]:
+            if u in [2, 3]:
                 red_button_pushed = True
         elif agent_id == 1:
             # assert agent_id == 1
-            if u in [1, 2,3,4]:
+            if u in [1, 2, 3, 4]:
                 yellow_button_pushed = True
-            if u in [2,3,4]:
+            if u in [2, 3, 4]:
                 green_button_pushed = True
             if u in [4]:
                 red_button_pushed = True
@@ -469,14 +468,13 @@ class ButtonsMap(Map):
                 green_button_pushed = True
             if u in [3]:
                 red_button_pushed = True
-            
-
 
         return ButtonsState(
             yellow_button_pushed=yellow_button_pushed,
             green_button_pushed=green_button_pushed,
             red_button_pushed=red_button_pushed,
         )
+
 
 class DecentralizedEnv(ABC):
     """Base class for decentalized training environments."""

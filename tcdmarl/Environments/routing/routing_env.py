@@ -70,7 +70,7 @@ class RoutingEnv(DecentralizedEnv):  # TODO rename to DecentralizedRoutingEnv
         if not save_path in PRM_TLCD_MAP:
             self.prm = sparse_rm_to_prm(self.reward_machine)
             if self.tlcd is not None:
-                self.prm = self.prm.add_tlcd(self.tlcd)
+                self.prm = self.prm.add_tlcd(self.tlcd, Path(save_path).name)
             PRM_TLCD_MAP[save_path] = self.prm
         else:
             self.prm = copy.deepcopy(PRM_TLCD_MAP[save_path])
@@ -114,7 +114,7 @@ class RoutingEnv(DecentralizedEnv):  # TODO rename to DecentralizedRoutingEnv
         )
         self.last_action = last_action
 
-        l = self.get_mdp_label(s, s_next, self.u)
+        l = self.get_mdp_label(s, s_next, self.get_old_u(self.u))
         r: int = 0
 
         for e in l:

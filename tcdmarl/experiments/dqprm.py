@@ -7,9 +7,9 @@ from typing import Any, Dict, List, Tuple
 import numpy as np
 
 from tcdmarl.Agent.agent import Agent
+from tcdmarl.Environments.buttons.buttons_env import ButtonsEnv
 from tcdmarl.Environments.common import DecentralizedEnv
 from tcdmarl.Environments.routing.routing_env import RoutingEnv
-from tcdmarl.Environments.buttons.buttons_env import ButtonsEnv
 from tcdmarl.experiments.common import create_centralized_environment
 from tcdmarl.tester.learning_params import LearningParameters
 from tcdmarl.tester.tester import Tester
@@ -23,7 +23,7 @@ def create_decentralized_environment(
         return RoutingEnv(
             agent_list[agent_id].rm_file, agent_id, tester.env_settings, tester.tlcd
         ).use_prm(tester.use_prm)
-    
+
     elif tester.experiment == "buttons":
         return ButtonsEnv(
             agent_list[agent_id].rm_file, agent_id, tester.env_settings, tester.tlcd
@@ -94,7 +94,11 @@ def run_qlearning_task(
                     if not (u == current_u) and not (
                         u in agent_list[i].terminal_states
                     ):
-                        l = training_environments[i].get_mdp_label(s, s_new, u)
+                        l = training_environments[i].get_mdp_label(
+                            s,
+                            s_new,
+                            training_environments[i].get_old_u(agent_list[i].u),
+                        )
                         r = 0
                         u_temp = u
                         u2 = u
@@ -361,7 +365,7 @@ def run_multi_agent_experiment(
 
         # This is instance is only used for extracting environment meta-info
         testing_env = create_centralized_environment(tester, use_prm=False, tlcd=None)
-        
+
         num_states = testing_env.get_map().get_num_states()
 
         # Create the a list of agents for this experiment
