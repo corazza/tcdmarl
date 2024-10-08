@@ -268,7 +268,7 @@ def run_centralized_experiment(
 
         rm_test_file = tester.rm_test_file
 
-        # This is instance is only used for extracting environment meta-info
+        # This instance is only used for extracting environment meta-info
         testing_env = create_centralized_environment(tester, use_prm=False, tlcd=None)
 
         s_i: NDArray[int32] = testing_env.get_initial_team_state()
