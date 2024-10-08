@@ -1,6 +1,10 @@
 from typing import Optional
 
+from tcdmarl.consts import ALL_EXPERIMENT_NAMES
 from tcdmarl.Environments.common import CentralizedEnv
+from tcdmarl.Environments.generator.multi_agent_generator_env import (
+    MultiAgentGeneratorEnv,
+)
 from tcdmarl.Environments.routing.multi_agent_routing_env import MultiAgentRoutingEnv
 from tcdmarl.tcrl.reward_machines.rm_common import CausalDFA
 from tcdmarl.tester.tester import Tester
@@ -12,11 +16,15 @@ def create_centralized_environment(
     """
     Helper method for instantiating the right centralized environment for testing based on the experiment name.
     """
-    if tester.experiment == "routing" or tester.experiment == "centralized_routing":
+    if "routing" in tester.experiment:
         return MultiAgentRoutingEnv(
             tester.rm_test_file, tester.env_settings, tlcd=tlcd
         ).use_prm(use_prm)
+    elif "generator" in tester.experiment:
+        return MultiAgentGeneratorEnv(
+            tester.rm_test_file, tester.env_settings, tlcd=tlcd
+        )
     else:
         raise ValueError(
-            'experiment should be one of: "routing", "centralized_routing"'
+            f"experiment should be one of: f{ALL_EXPERIMENT_NAMES}, got {tester.experiment}"
         )

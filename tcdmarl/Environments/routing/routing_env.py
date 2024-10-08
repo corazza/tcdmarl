@@ -7,9 +7,10 @@ from numpy import int32
 from numpy.typing import NDArray
 
 from tcdmarl.consts import SYNCHRONIZATION_THRESH
-from tcdmarl.Environments.common import STR_TO_ACTION, DecentralizedEnv, RoutingMap
+from tcdmarl.environment_configs.routing_config import routing_config
+from tcdmarl.Environments.common import STR_TO_ACTION, DecentralizedEnv
+from tcdmarl.Environments.routing.map import RoutingMap
 from tcdmarl.reward_machines.sparse_reward_machine import SparseRewardMachine
-from tcdmarl.routing_config import routing_config
 from tcdmarl.shared_mem import PRM_TLCD_MAP
 from tcdmarl.tcrl.reward_machines.rm_common import CausalDFA, ProbabilisticRewardMachine
 from tcdmarl.tcrl.utils import sparse_rm_to_prm
@@ -236,12 +237,14 @@ class RoutingEnv(DecentralizedEnv):  # TODO rename to DecentralizedRoutingEnv
 def play():
     agent_id = 0
 
-    tester = routing_config(num_times=0)
+    tester = routing_config(num_times=0, use_tlcd=False, step_unit_factor=100)
 
     env_settings = tester.env_settings
     env_settings["p"] = 0.99
 
-    game = RoutingEnv(tester.rm_learning_file_list[agent_id], agent_id, env_settings)
+    game = RoutingEnv(
+        tester.rm_learning_file_list[agent_id], agent_id, env_settings, tlcd=None
+    )
 
     s = game.get_initial_state()
 

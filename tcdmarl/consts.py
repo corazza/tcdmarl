@@ -1,7 +1,7 @@
 # For agent synchronization
 SYNCHRONIZATION_THRESH: float = 0.3
 
-EXPERIMENT_NAMES: list[str] = ["routing"]
+EXPERIMENT_NAMES: list[str] = ["routing", "generator"]
 
 ALL_EXPERIMENT_NAMES: list[str] = [
     name if i == 0 else "centralized_" + name

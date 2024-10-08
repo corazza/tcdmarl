@@ -20,6 +20,21 @@
             }
         },
         {
+            "name": "Show MDP: generator",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/tcdmarl/main.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--experiment",
+                "generator",
+                "--show"
+            ],
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            }
+        },
+        {
             "name": "Plot results",
             "type": "debugpy",
             "request": "launch",

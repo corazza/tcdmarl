@@ -8,20 +8,19 @@ import numpy as np
 from numpy import int32
 from numpy.typing import NDArray
 
-from tcdmarl.environment_configs.routing_config import routing_config
-from tcdmarl.Environments.common import STR_TO_ACTION, CentralizedEnv
-from tcdmarl.Environments.routing.map import RoutingMap
+from tcdmarl.Environments.common import CentralizedEnv
+from tcdmarl.Environments.generator.map import GeneratorMap
 from tcdmarl.reward_machines.sparse_reward_machine import SparseRewardMachine
 from tcdmarl.shared_mem import PRM_TLCD_MAP
 from tcdmarl.tcrl.reward_machines.rm_common import CausalDFA, ProbabilisticRewardMachine
 from tcdmarl.tcrl.utils import sparse_rm_to_prm
 
 
-class MultiAgentRoutingEnv(CentralizedEnv):  # TODO rename to CentralizedRoutingEnv
+class MultiAgentGeneratorEnv(CentralizedEnv):  # TODO rename to CentralizedRoutingEnv
     """
     Multi-agent version.
 
-    Case study 1: routing environment with two agents and a switch door.
+    Case study 1: TODO
     """
 
     def __init__(
@@ -41,7 +40,7 @@ class MultiAgentRoutingEnv(CentralizedEnv):  # TODO rename to CentralizedRouting
             Dictionary of environment settings
         """
         self.num_agents: int = 2
-        self.map = RoutingMap(env_settings)
+        self.map = GeneratorMap(env_settings)
 
         # Define Initial states of all agents
         self.s_i: NDArray[int32] = np.full(self.num_agents, -1, dtype=int)
@@ -59,13 +58,14 @@ class MultiAgentRoutingEnv(CentralizedEnv):  # TODO rename to CentralizedRouting
             self.num_agents, -1, dtype=int
         )  # Initialize last action with garbage values
 
+        # TODO abstract away (into MarlEnv -> CentralizedEnv, DecentralizedEnv)
         # PRMs x TL-CDs
         self._saved_rm_path: Path = rm_file
         self.tlcd = tlcd
         self._use_prm: bool = False
         self.prm: ProbabilisticRewardMachine
 
-    def use_prm(self, value: bool) -> "MultiAgentRoutingEnv":
+    def use_prm(self, value: bool) -> "MultiAgentGeneratorEnv":
         if not value:
             return self
 
@@ -86,7 +86,7 @@ class MultiAgentRoutingEnv(CentralizedEnv):  # TODO rename to CentralizedRouting
         self._use_prm = True
         return self
 
-    def get_map(self) -> RoutingMap:
+    def get_map(self) -> GeneratorMap:
         return self.map
 
     def environment_step(
@@ -118,16 +118,16 @@ class MultiAgentRoutingEnv(CentralizedEnv):  # TODO rename to CentralizedRouting
 
         for i in range(self.num_agents):
             last_action: int
-            routing_state = self.map.compute_joint_state(self.get_old_u(self.u))
+            generator_state = self.map.compute_joint_state(self.get_old_u(self.u))
             s_next[i], last_action = self.map.get_next_state(
-                s[i], a[i], i, routing_state=routing_state
+                s[i], a[i], i, generator_state
             )
             self.last_action[i] = last_action
 
-        l = self.get_mdp_label(s, s_next, self.u)
+        label = self.get_mdp_label(s, s_next, self.u)
         r: int = 0
 
-        for e in l:
+        for e in label:
             # Get the new reward machine state and the reward of this step
 
             if not self._use_prm:
@@ -142,7 +142,7 @@ class MultiAgentRoutingEnv(CentralizedEnv):  # TODO rename to CentralizedRouting
             self.u = u2
 
         # self.show_graphic(s)
-        return r, l, s_next
+        return r, label, s_next
 
     def get_actions(self, agent_id: int) -> NDArray[int32]:
         """
@@ -198,6 +198,15 @@ class MultiAgentRoutingEnv(CentralizedEnv):  # TODO rename to CentralizedRouting
         """
         return np.copy(self.s_i)
 
+    def get_old_u(self, u: int) -> int:
+        if not self._use_prm:
+            return u
+        else:
+            if len(self.prm.state_map_after_product) != 0:
+                return self.prm.state_map_after_product[u]
+            else:
+                return u
+
     ############## DQPRM-RELATED METHODS ########################################
     def get_mdp_label(
         self, _s: NDArray[int32], s_next: NDArray[int32], u: int
@@ -222,7 +231,7 @@ class MultiAgentRoutingEnv(CentralizedEnv):  # TODO rename to CentralizedRouting
             MDP label resulting from the state transition.
         """
 
-        l: List[str] = []
+        label: list[str] = []
 
         agent1 = 0
         agent2 = 1
@@ -230,209 +239,17 @@ class MultiAgentRoutingEnv(CentralizedEnv):  # TODO rename to CentralizedRouting
         row1, col1 = self.map.get_state_description(s_next[agent1])
         row2, col2 = self.map.get_state_description(s_next[agent2])
 
-        if (row1, col1) == self.map.env_settings["B1"]:
-            l.append("b1")
+        if (row1, col1) == self.map.env_settings["A"]:
+            label.append("a")
 
-        if (row1, col1) == self.map.env_settings["goal_location"]:
-            l.append("g")
+        if (row2, col2) == self.map.env_settings["B"]:
+            label.append("b")
 
-        if (row1, col1) == self.map.env_settings["K1"] or (
-            row1,
-            col1,
-        ) == self.map.env_settings["K2"]:
-            l.append("k")
+        if (row1, col1) == self.map.env_settings["C"]:
+            if (row2, col2) not in self.map.yellow_tiles:
+                label.append("c")
 
-        if (row1, col1) == self.map.env_settings["F1"]:
-            l.append("f")
-        if (row1, col1) == self.map.env_settings["F2"] and self.map.env_settings[
-            "enable_f2"
-        ]:
-            l.append("f")
-
-        if (row2, col2) == self.map.env_settings["B2"]:
-            l.append("b2")
-
-        if (row2, col2) == self.map.env_settings["B3"]:
-            if (row1, col1) not in self.map.green_tiles and (
-                row1,
-                col1,
-            ) not in self.map.orange_tiles:
-                l.append("b3")
-
-        return l
-
-    ################## HRL-RELATED METHODS ######################################
-    def get_options_list(self, agent_id: int):
-        """
-        Return a list of strings representing the possible options for each agent.
-
-        Input
-        -----
-        agent_id : int
-            The id of the agent whose option list is to be returned.
-
-        Output
-        ------
-        options_list : list
-            list of strings representing the options avaialble to the agent.
-        """
-
-        agent1 = 0
-        agent2 = 1
-
-        options_list: List[str] = []
-
-        if agent_id == agent1:
-            options_list.append("w1")
-            options_list.append("b1")
-            options_list.append("k")
-            options_list.append("f")
-            options_list.append("g")
-
-        if agent_id == agent2:
-            options_list.append("w2")
-            options_list.append("b2")
-
-        return options_list
-
-    def get_old_u(self, u: int) -> int:
-        if not self._use_prm:
-            return u
-        else:
-            if len(self.prm.state_map_after_product) != 0:
-                return self.prm.state_map_after_product[u]
-            else:
-                return u
-
-    def get_avail_options(self, agent_id: int):
-        """
-        Given the current metastate, get the available options. Some options are unavailable if
-        they are not possible to complete at the current stage of the task. In such circumstances
-        we don't want the agents to update the corresponding option q-functions.
-        """
-        agent1 = 0
-        agent2 = 1
-
-        avail_options: List[str] = []
-        routing_state = self.map.compute_joint_state(self.get_old_u(self.u))
-
-        if agent_id == agent1:
-            avail_options.append("w1")
-            avail_options.append("b1")
-            if routing_state.b1_pressed or routing_state.b2_pressed:
-                avail_options.append("k")  # K1
-            if not routing_state.b3_pressed:
-                avail_options.append("f")
-            else:
-                avail_options.append("g")
-        if agent_id == agent2:
-            avail_options.append("w2")
-            avail_options.append("b3")
-            if routing_state.b3_pressed:
-                avail_options.append("b2")
-
-        return avail_options
-
-    def get_avail_meta_action_indeces(self, agent_id: int) -> List[int]:
-        """
-        Get a list of the indeces corresponding to the currently available meta-action/option
-        """
-        avail_options = self.get_avail_options(agent_id)
-        all_options_list = self.get_options_list(agent_id)
-        avail_meta_action_indeces: List[int] = []
-        for option in avail_options:
-            avail_meta_action_indeces.append(all_options_list.index(option))
-        return avail_meta_action_indeces
-
-    def get_completed_options(self, s: NDArray[int32]) -> List[str]:
-        """
-        Get a list of strings corresponding to options that are deemed complete in the team state described by s.
-
-        Parameters
-        ----------
-        s : numpy integer array
-            Array of integers representing the environment states of the various agents.
-            s[id] represents the state of the agent indexed by index "id".
-
-        Outputs
-        -------
-        completed_options : list
-            list of strings corresponding to the completed options.
-        """
-        agent1 = 0
-        agent2 = 1
-
-        completed_options: List[str] = []
-
-        for i in range(self.num_agents):
-            row, col = self.map.get_state_description(s[i])
-
-            if i == agent1:
-                if (row, col) == self.map.env_settings["B1"]:
-                    completed_options.append("b1")
-                if (row, col) == self.map.env_settings["K1"]:
-                    completed_options.append("k")
-                if (row, col) == self.map.env_settings["F1"]:
-                    completed_options.append("f")
-                if (row, col) == self.map.env_settings["F2"] and self.map.env_settings[
-                    "enable_f2"
-                ]:
-                    completed_options.append("f")
-                if (row, col) == self.map.env_settings["K2"]:
-                    completed_options.append("k")
-                if (row, col) == self.map.env_settings["goal_location"]:
-                    completed_options.append("g")
-                if s[i] == self.map.env_settings["initial_states"][i]:
-                    completed_options.append("w1")
-
-            elif i == agent2:
-                if (row, col) == self.map.env_settings["B2"]:
-                    completed_options.append("b2")
-                if s[i] == self.map.env_settings["initial_states"][i]:
-                    completed_options.append("w2")
-
-        return completed_options
-
-    def get_meta_state(self, _agent_id: int):
-        """
-        Return the meta-state that the agent should use for it's meta controller.
-
-        Input
-        -----
-        s_team : numpy array
-            s_team[i] is the state of agent i.
-        agent_id : int
-            Index of agent whose meta-state is to be returned.
-
-        Output
-        ------
-        meta_state : int
-            Index of the meta-state.
-        """
-        routing_state = self.map.compute_joint_state(self.get_old_u(self.u))
-        # Convert the Truth values of which buttons have been pushed to an int
-        meta_state = int(
-            f"{int(routing_state.b1_pressed)}{int(routing_state.b2_pressed)}{int(routing_state.b3_pressed)}{int(routing_state.key_collected)}",
-            2,
-        )
-
-        # meta_state = int('{}{}{}'.format(int(self.orange_button_pushed), int(self.green_button_pushed), int(self.yellow_button_pushed)), 2)
-
-        # # if the task has been failed, return 8
-        # if self.u == 6:
-        #     meta_state = 8
-
-        # meta_state = self.u
-
-        return meta_state
-
-    def get_num_meta_states(self, _agent_id: int) -> int:
-        """
-        Return the number of meta states for the agent specified by agent_id.
-        """
-        # how many different combinations of button presses are there
-        # return int(8) # TODO check
-        raise NotImplementedError("check this")
+        return label
 
     ######################### TROUBLESHOOTING METHODS ################################
 
@@ -460,14 +277,6 @@ class MultiAgentRoutingEnv(CentralizedEnv):  # TODO rename to CentralizedRouting
         display[self.map.env_settings["F2"]] = 9
         display[self.map.env_settings["goal_location"]] = 9
 
-        for loc in self.map.blue_tiles:
-            display[loc] = 8
-        for loc in self.map.orange_tiles:
-            display[loc] = 8
-        for loc in self.map.pink_tiles:
-            display[loc] = 8
-        for loc in self.map.green_tiles:
-            display[loc] = 8
         for loc in self.map.yellow_tiles:
             display[loc] = 8
 
@@ -494,29 +303,16 @@ class MultiAgentRoutingEnv(CentralizedEnv):  # TODO rename to CentralizedRouting
             display[loc] = -1
 
         special_cells = {
-            "B1": self.map.env_settings["B1"],
-            "B2": self.map.env_settings["B2"],
-            "B3": self.map.env_settings["B3"],
-            "K1": self.map.env_settings["K1"],
-            "F1": self.map.env_settings["F1"],
-            "F2": self.map.env_settings["F2"],
-            "K2": self.map.env_settings["K2"],
-            "G": self.map.env_settings["goal_location"],
+            "A": self.map.env_settings["A"],
+            "B": self.map.env_settings["B"],
+            "C": self.map.env_settings["C"],
         }
 
         for label, loc in special_cells.items():
             display[loc] = 1
 
-        for loc in self.map.blue_tiles:
-            display[loc] = 3
-        for loc in self.map.orange_tiles:
-            display[loc] = 4
-        for loc in self.map.green_tiles:
-            display[loc] = 5
         for loc in self.map.yellow_tiles:
             display[loc] = 6
-        for loc in self.map.pink_tiles:
-            display[loc] = 7
 
         # Display the agents
         for i in range(self.num_agents):
@@ -566,55 +362,3 @@ class MultiAgentRoutingEnv(CentralizedEnv):  # TODO rename to CentralizedRouting
                         fontsize=7,
                     )
         plt.show()  # type: ignore
-
-
-def play():
-    tester = routing_config(num_times=0, use_tlcd=False, step_unit_factor=100)
-
-    env_settings = tester.env_settings
-    env_settings["p"] = 1.0
-
-    num_agents: int = tester.num_agents
-
-    game = MultiAgentRoutingEnv(tester.rm_test_file, env_settings, tlcd=None)
-
-    s = game.get_initial_team_state()
-    print(s)
-
-    while True:
-        # Showing game
-        game.show(s)
-
-        # Getting action
-        a = np.full(num_agents, -1, dtype=int)
-
-        for i in range(num_agents):
-            print("\nAction{}?".format(i + 1), end="")
-            usr_inp = input()
-            print()
-
-            if usr_inp not in STR_TO_ACTION:
-                print("forbidden action")
-                a[i] = STR_TO_ACTION["x"]
-            else:
-                print(STR_TO_ACTION[usr_inp])
-                a[i] = STR_TO_ACTION[usr_inp]
-
-        r, l, s = game.environment_step(s, a)
-
-        print("---------------------")
-        print("Next States: ", s)
-        print("Label: ", l)
-        print("Reward: ", r)
-        print("RM state: ", game.u)
-        print("Meta state: ", game.get_meta_state(0))
-        print("---------------------")
-
-        if game.reward_machine.is_terminal_state(game.u):  # Game Over
-            break
-    game.show(s)
-
-
-# This code allow to play a game (for debugging purposes)
-if __name__ == "__main__":
-    play()

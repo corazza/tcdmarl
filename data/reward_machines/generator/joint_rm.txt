@@ -1,0 +1,24 @@
+0 # initial state 
+(0, 1, 'b1', 0) # B1 pressed
+(0, 2, 'b2', 0) # B2 pressed
+(0, 3, 'b3', 0) # B3 pressed
+(0, 10, 'k', 0) # K1 collected
+(1, 4, 'b2', 0) # B1 -> B2
+(1, 6, 'b3', 0) # B1 -> B2
+(1, 10, 'k', 0) # B1 -> K1
+(2, 4, 'b1', 0) # B2 -> B1
+(2, 5, 'b3', 0) # B2 -> B3
+(2, 10, 'k', 0) # B2 -> K1
+(3, 6, 'b1', 0) # B3 -> B1
+(3, 5, 'b2', 0) # B3 -> B2
+(3, 10, 'k', 0) # B3 -> K1
+(4, 7, 'b3', 0) # B1, B2 -> B3
+(4, 10, 'k', 0) # B1, B2 -> K1
+(5, 7, 'b1', 0) # B2, B3 -> B1
+(5, 10, 'k', 0) # B2, B3 -> K1
+(6, 7, 'b2', 0) # B1, B3 -> B2
+(6, 10, 'k', 0) # B1, B3 -> K1
+(7, 8, 'k', 0) # K2 collected
+(8, 9, 'g', 1) # Goal state is reached
+(10, 10, 'True', 0) # state 10 is an absorbing state
+[] # additional events

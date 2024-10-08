@@ -15,13 +15,14 @@ from matplotlib.ticker import FuncFormatter, MaxNLocator
 
 from tcdmarl.consts import ALL_EXPERIMENT_NAMES
 from tcdmarl.defaults import DEFAULT_NUM_SEPARATE_TRIALS, DEFAULT_STEP_UNIT_FACTOR
+from tcdmarl.environment_configs.generator_config import generator_config
+from tcdmarl.environment_configs.routing_config import routing_config
 from tcdmarl.experiments.common import create_centralized_environment
 from tcdmarl.experiments.dqprm import run_multi_agent_experiment
 from tcdmarl.experiments.run_centralized_coordination_experiment import (
     run_centralized_experiment,
 )
 from tcdmarl.path_consts import RESULTS_DIR
-from tcdmarl.routing_config import routing_config
 from tcdmarl.tester.tester import Tester
 
 
@@ -108,7 +109,7 @@ def plot_multi_agent_results(
             current_25.append(np.percentile(np.array(plot_dict[step]), 25))
             current_50.append(np.percentile(np.array(plot_dict[step]), 50))
             current_75.append(np.percentile(np.array(plot_dict[step]), 75))
-            current_step.append(sum(plot_dict[step]) / len(plot_dict[step]))
+            current_step.append(np.float64(sum(plot_dict[step]) / len(plot_dict[step])))
         else:
             current_step.pop(0)
             current_25.pop(0)
@@ -117,11 +118,11 @@ def plot_multi_agent_results(
             current_25.append(np.percentile(np.array(plot_dict[step]), 25))
             current_50.append(np.percentile(np.array(plot_dict[step]), 50))
             current_75.append(np.percentile(np.array(plot_dict[step]), 75))
-            current_step.append(sum(plot_dict[step]) / len(plot_dict[step]))
+            current_step.append(np.float64(sum(plot_dict[step]) / len(plot_dict[step])))
 
-        prc_25.append(sum(current_25) / len(current_25))
-        prc_50.append(sum(current_50) / len(current_50))
-        prc_75.append(sum(current_75) / len(current_75))
+        prc_25.append(np.float64(sum(current_25) / len(current_25)))
+        prc_50.append(np.float64(sum(current_50) / len(current_50)))
+        prc_75.append(np.float64(sum(current_75) / len(current_75)))
         steps.append(step)
 
     plt.plot(steps, prc_25, alpha=0)
@@ -330,15 +331,26 @@ def main(
         assert not all_experiments
         assert experiment in ALL_EXPERIMENT_NAMES
         if show:
-            tester = routing_config(
-                num_times=num_trials,
-                use_tlcd=tlcd,
-                step_unit_factor=step_unit_factor,
-            )
-            testing_env = create_centralized_environment(
-                tester, use_prm=False, tlcd=tester.tlcd
-            )
-            testing_env.show_graphic(testing_env.get_initial_team_state())
+            if experiment == "routing":
+                tester = routing_config(
+                    num_times=num_trials,
+                    use_tlcd=tlcd,
+                    step_unit_factor=step_unit_factor,
+                )
+                testing_env = create_centralized_environment(
+                    tester, use_prm=False, tlcd=tester.tlcd
+                )
+                testing_env.show_graphic(testing_env.get_initial_team_state())
+            elif experiment == "generator":
+                tester = generator_config(
+                    num_times=num_trials,
+                    use_tlcd=tlcd,
+                    step_unit_factor=step_unit_factor,
+                )
+                testing_env = create_centralized_environment(
+                    tester, use_prm=False, tlcd=tester.tlcd
+                )
+                testing_env.show_graphic(testing_env.get_initial_team_state())
         else:
             print(f'Running experiment: "{experiment}" (use_tlcd={tlcd})')
             run_experiment(
