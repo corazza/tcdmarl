@@ -5,7 +5,7 @@ Defines label-based reward machines and probabilistic reward machines.
 import copy
 import pickle
 from abc import ABC, abstractmethod
-from typing import Dict, Iterable, List, Optional, Set, Tuple
+from typing import Dict, Iterable, List, Set, Tuple
 
 import gym
 import numpy as np
