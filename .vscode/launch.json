@@ -5,7 +5,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Show MDP: routing",
+            "name": "Show MDP: Routing",
             "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/tcdmarl/main.py",
@@ -20,7 +20,7 @@
             }
         },
         {
-            "name": "Show MDP: generator",
+            "name": "Show MDP: Generator",
             "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/tcdmarl/main.py",
@@ -30,6 +30,17 @@
                 "generator",
                 "--show"
             ],
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            }
+        },
+        {
+            "name": "Play: Generator",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/tcdmarl/Environments/generator/multi_agent_generator_env.py",
+            "console": "integratedTerminal",
+            "args": [],
             "env": {
                 "PYTHONPATH": "${workspaceFolder}"
             }
@@ -62,6 +73,27 @@
                 "10",
                 "--step-unit-factor",
                 "500",
+            ],
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            }
+        },
+        {
+            "name": "Generator (decentralized, no TL-CD)",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/tcdmarl/main.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--collection",
+                "${input:collection}",
+                "--experiment",
+                "generator",
+                "--num-trials",
+                "10",
+                "--plot-results-after-experiment",
+                "--step-unit-factor",
+                "100",
             ],
             "env": {
                 "PYTHONPATH": "${workspaceFolder}"

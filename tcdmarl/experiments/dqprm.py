@@ -22,6 +22,9 @@ def create_decentralized_environment(
         return RoutingEnv(
             agent_list[agent_id].rm_file, agent_id, tester.env_settings, tester.tlcd
         ).use_prm(tester.use_prm)
+    elif tester.experiment == "generator":
+        # return GeneratorEnv(agent_list[agent_id].rm_file, agent_id, tester.env_settings)
+        raise NotImplementedError
     else:
         raise ValueError('experiment should be one of: "routing"')
 

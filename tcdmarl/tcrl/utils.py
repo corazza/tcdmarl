@@ -35,9 +35,14 @@ def sparse_rm_to_prm(sparse_rm: SparseRewardMachine) -> ProbabilisticRewardMachi
             formulas.append(formula)
 
         # In all other cases, the RM should self-loop with output 0
-        any_transition = " | ".join([f"({f})" for f in formulas])
-        otherwise = f"({any_transition})~"
-        builder.t(u1, otherwise, u1, prob=1, output=0)
+        if len(formulas) == 0:
+            # no outgoing transitions
+            builder.t(u1, ".", u1, prob=1, output=0)
+        else:
+            # outgoing transitions corresponding to any of the formulas
+            any_transition = " | ".join([f"({f})" for f in formulas])
+            otherwise = f"({any_transition})~"
+            builder.t(u1, otherwise, u1, prob=1, output=0)
 
     prm = builder.build()
     return prm

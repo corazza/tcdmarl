@@ -204,6 +204,19 @@ def run_experiment(
             num_times=num_trials,
             show_print=True,
         )
+    elif experiment == "generator":
+        # Get test object from config script
+        tester = generator_config(
+            num_times=num_trials,
+            use_tlcd=use_tlcd,
+            step_unit_factor=step_unit_factor,
+        )
+        tester = run_multi_agent_experiment(
+            tester=tester,
+            num_agents=tester.num_agents,
+            num_times=num_trials,
+            show_print=True,
+        )
     else:
         assert experiment == "centralized_routing"
         # Get test object from config script

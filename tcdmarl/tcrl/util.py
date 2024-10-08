@@ -1,14 +1,15 @@
-from pathlib import Path
 import random
+from pathlib import Path
+from typing import Any
 
 import numpy as np
 
+from tcdmarl.consts import *
+
 # from transformers import pipeline, set_seed
 
-from consts import *
 
-
-def random_from(xs: list):
+def random_from(xs: list[Any]):
     num = len(xs)
     i = np.random.randint(num)
     return xs[i]

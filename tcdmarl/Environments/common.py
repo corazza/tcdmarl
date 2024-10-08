@@ -58,9 +58,34 @@ class Map:
             self.forbidden_transitions.add((row - 1, col, Actions.DOWN))
 
         # one_way_door_location = self.env_settings['oneway']
-        self.forbidden_transitions.add((5, 6, Actions.UP))
-        self.forbidden_transitions.add((5, 8, Actions.UP))
-        self.forbidden_transitions.add((7, 8, Actions.UP))
+        # TODO this is left from Routing hardcoding?
+        # self.forbidden_transitions.add((5, 6, Actions.UP))
+        # self.forbidden_transitions.add((5, 8, Actions.UP))
+        # self.forbidden_transitions.add((7, 8, Actions.UP))
+
+        one_way_door_locations = self.env_settings["oneway"]
+        for direction, locations in one_way_door_locations.items():
+            for row, col in locations:
+                if direction == Actions.UP:
+                    # Only allow UP, block DOWN, LEFT, and RIGHT from this location
+                    self.forbidden_transitions.add((row, col, Actions.DOWN))
+                    self.forbidden_transitions.add((row, col, Actions.LEFT))
+                    self.forbidden_transitions.add((row, col, Actions.RIGHT))
+                elif direction == Actions.DOWN:
+                    # Only allow DOWN, block UP, LEFT, and RIGHT
+                    self.forbidden_transitions.add((row, col, Actions.UP))
+                    self.forbidden_transitions.add((row, col, Actions.LEFT))
+                    self.forbidden_transitions.add((row, col, Actions.RIGHT))
+                elif direction == Actions.LEFT:
+                    # Only allow LEFT, block UP, DOWN, and RIGHT
+                    self.forbidden_transitions.add((row, col, Actions.UP))
+                    self.forbidden_transitions.add((row, col, Actions.DOWN))
+                    self.forbidden_transitions.add((row, col, Actions.RIGHT))
+                elif direction == Actions.RIGHT:
+                    # Only allow RIGHT, block UP, DOWN, and LEFT
+                    self.forbidden_transitions.add((row, col, Actions.UP))
+                    self.forbidden_transitions.add((row, col, Actions.DOWN))
+                    self.forbidden_transitions.add((row, col, Actions.LEFT))
 
     def get_num_states(self) -> int:
         return self.num_states

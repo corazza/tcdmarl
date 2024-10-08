@@ -97,7 +97,7 @@ class GeneratorMap(Map):
         else:
             assert agent_id == 1
             # Movable door
-            if generator_state.button_pressed:
+            if not generator_state.button_pressed:
                 if (row, col) in self.yellow_tiles:
                     s_next = s
 
@@ -108,7 +108,11 @@ class GeneratorMap(Map):
         return s_next, last_action
 
     def compute_joint_state(self, u: int) -> GeneratorState:
-        raise NotImplementedError
+        return GeneratorState(button_pressed=u in [2, 3, 4, 5])
 
     def compute_state(self, agent_id: int, u: int) -> GeneratorState:
-        raise NotImplementedError
+        if agent_id == 0:
+            return GeneratorState(button_pressed=u in [1, 3, 5])
+        else:
+            assert agent_id == 1
+            return GeneratorState(button_pressed=u in [1])

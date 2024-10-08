@@ -8,7 +8,8 @@ import numpy as np
 from numpy import int32
 from numpy.typing import NDArray
 
-from tcdmarl.Environments.common import CentralizedEnv
+from tcdmarl.environment_configs.generator_config import generator_config
+from tcdmarl.Environments.common import STR_TO_ACTION, Actions, CentralizedEnv
 from tcdmarl.Environments.generator.map import GeneratorMap
 from tcdmarl.reward_machines.sparse_reward_machine import SparseRewardMachine
 from tcdmarl.shared_mem import PRM_TLCD_MAP
@@ -259,32 +260,43 @@ class MultiAgentGeneratorEnv(CentralizedEnv):  # TODO rename to CentralizedRouti
 
         Parameters
         ----------
-        s : int
-            Index of the current state
+        s : NDArray[int32]
+            The current state(s) of the agent(s).
         """
-        display = np.zeros((self.map.number_of_rows, self.map.number_of_columns))
+        # Initialize the display grid with zeros
+        display = np.zeros(
+            (self.map.number_of_rows, self.map.number_of_columns), dtype=int
+        )
 
         # Display the locations of the walls
         for loc in self.map.env_settings["walls"]:
-            display[loc] = -1
+            display[loc] = -1  # Walls are marked as -1
 
-        display[self.map.env_settings["B1"]] = 9
-        display[self.map.env_settings["B2"]] = 9
-        display[self.map.env_settings["B3"]] = 9
-        display[self.map.env_settings["K1"]] = 9
-        display[self.map.env_settings["K2"]] = 9
-        display[self.map.env_settings["F1"]] = 9
-        display[self.map.env_settings["F2"]] = 9
-        display[self.map.env_settings["goal_location"]] = 9
+        # Mark special cells (A, B, C)
+        special_cells = ["A", "B", "C"]
+        for cell in special_cells:
+            display[self.map.env_settings[cell]] = 9  # Mark A, B, C as 9 in the grid
 
+        # Mark yellow tiles
         for loc in self.map.yellow_tiles:
-            display[loc] = 8
+            display[loc] = 8  # Yellow tiles are marked as 8
+
+        # Display one-way doors
+        one_way_doors = self.map.env_settings["oneway"]
+        for _direction, locations in one_way_doors.items():
+            for loc in locations:
+                display[loc] = (
+                    5  # Mark one-way doors as 5 (you can change the number if desired)
+                )
 
         # Display the agents
         for i in range(self.num_agents):
             row, col = self.map.get_state_description(s[i])
-            display[row, col] = i + 1
+            display[row, col] = (
+                i + 1
+            )  # Agents are marked as 1, 2, etc., based on agent index
 
+        # Print the gridworld state
         print(display)
 
     def show_graphic(self, s: NDArray[int32]):
@@ -293,72 +305,191 @@ class MultiAgentGeneratorEnv(CentralizedEnv):  # TODO rename to CentralizedRouti
 
         Parameters
         ----------
-        s : int
-            Index of the current state
+        s : NDArray[int32]
+            The current state(s) of the agent(s).
         """
-        display = np.zeros((self.map.number_of_rows, self.map.number_of_columns))
+        # Constants for cell values
+        WALL = -1
+        EMPTY = 0
+        SPECIAL = 1
+        AGENT = 2
+        YELLOW_TILE = 6
+        ARROW = 3  # New constant for arrows (background will be white)
 
-        # Display the locations of the walls
+        # Initialize the display grid
+        display = np.full((self.map.number_of_rows, self.map.number_of_columns), EMPTY)
+
+        # Place walls on the grid
         for loc in self.map.env_settings["walls"]:
-            display[loc] = -1
+            display[loc] = WALL
 
+        # Dictionary to hold labels and their positions
         special_cells = {
             "A": self.map.env_settings["A"],
             "B": self.map.env_settings["B"],
             "C": self.map.env_settings["C"],
         }
 
+        # Mark special cells on the grid
         for label, loc in special_cells.items():
-            display[loc] = 1
+            display[loc] = SPECIAL
 
+        # Mark yellow tiles on the grid
         for loc in self.map.yellow_tiles:
-            display[loc] = 6
+            display[loc] = YELLOW_TILE
 
-        # Display the agents
+        # Place agents on the grid and update special_cells with agent positions
         for i in range(self.num_agents):
             row, col = self.map.get_state_description(s[i])
-            display[row, col] = 2
-            special_cells[f"A{i+1}"] = (row, col)
+            display[row, col] = AGENT
+            agent_label = f"A{i+1}"  # Short label for agents
+            special_cells[agent_label] = (row, col)
 
-        # Create a custom color map
-        cmap = mcolors.ListedColormap(
-            [
-                "red",  # -1 walls
-                "white",  # 0 empty cells
-                "gray",  # 1 special cells
-                "cyan",  # 2 agents
-                "blue",  # 3 blue_tiles
-                "orange",  # 4 orange_tiles
-                "green",  # 5 green_tiles
-                "yellow",  # 6 yellow_tiles
-                "pink",  # 7 pink_tiles
-                "purple",  # 8
-                "brown",  # 9
-                "black",  # 10
-            ]
+        # Display one-way doors as arrows in the grid (background will be white)
+        arrow_symbols = {
+            Actions.UP: "↑",
+            Actions.DOWN: "↓",
+            Actions.LEFT: "←",
+            Actions.RIGHT: "→",
+        }
+        arrow_locations = {}
+        for direction, locations in self.map.env_settings["oneway"].items():
+            arrow_symbol = arrow_symbols.get(direction, "")
+            for row, col in locations:
+                display[row, col] = ARROW  # Background is white for arrows
+                arrow_locations[(row, col)] = arrow_symbol
+
+        # Define colors for each cell type, including arrows
+        cell_colors = [
+            "red",  # WALL (-1)
+            "white",  # EMPTY (0)
+            "gray",  # SPECIAL (1)
+            "cyan",  # AGENT (2)
+            "white",  # ARROW (background is white) (3)
+            "yellow",  # YELLOW_TILE (6)
+        ]
+        cmap = mcolors.ListedColormap(cell_colors)
+        norm = mcolors.BoundaryNorm([-1.5, -0.5, 0.5, 1.5, 2.5, 3.5, 6.5], cmap.N)
+
+        # Create a figure and axis
+        plt.figure(figsize=(8, 8))
+        ax = plt.gca()
+
+        # Create a mesh grid for pcolormesh
+        x = np.arange(self.map.number_of_columns + 1)
+        y = np.arange(self.map.number_of_rows + 1)
+        X, Y = np.meshgrid(x, y)
+
+        # Plot the grid using pcolormesh
+        mesh = ax.pcolormesh(
+            X, Y, display, cmap=cmap, norm=norm, edgecolors="k", linewidth=0.5
         )
-        bounds = [-1.5, -0.5, 0.5, 1.5, 2.5, 3.5, 4.5, 5.5, 6.5, 7.5, 8.5, 9.5, 10.5]
-        norm = mcolors.BoundaryNorm(bounds, cmap.N)
 
-        # Use matplotlib to display the gridworld
-        plt.imshow(display, cmap=cmap, norm=norm)  # type: ignore
+        # Set axis labels and ticks
+        ax.set_xticks(np.arange(0.5, self.map.number_of_columns, 1))
+        ax.set_yticks(np.arange(0.5, self.map.number_of_rows, 1))
+        ax.set_xticklabels(np.arange(self.map.number_of_columns))
+        ax.set_yticklabels(np.arange(self.map.number_of_rows))
+        ax.set_xlabel("Columns")
+        ax.set_ylabel("Rows")
+        ax.set_xlim(0, self.map.number_of_columns)
+        ax.set_ylim(0, self.map.number_of_rows)
+        ax.set_aspect("equal")
+        ax.invert_yaxis()
 
-        # Add text labels to the special cells
-        for label, loc in special_cells.items():
-            plt.text(loc[1], loc[0], label, ha="center", va="center", color="white")  # type: ignore
+        # Add text labels to special cells, agents, and arrows
+        for label, (row, col) in special_cells.items():
+            ax.text(
+                col + 0.5,
+                row + 0.5,
+                label,
+                ha="center",
+                va="center",
+                color="white",
+                fontsize=12,
+            )
+        for (row, col), symbol in arrow_locations.items():
+            ax.text(
+                col + 0.5,
+                row + 0.5,
+                symbol,
+                ha="center",
+                va="center",
+                color="blue",  # Arrows are blue
+                fontsize=25,
+                fontweight="bold",
+            )
 
-        # Add coordinates to all other cells
+        # Add coordinates to empty cells
         for row in range(display.shape[0]):
             for col in range(display.shape[1]):
-                # Skip cells that already have text
-                if (row, col) not in special_cells.values():
-                    plt.text(  # type: ignore
-                        col,
-                        row,
-                        f"{row}, {col}",
+                # Only add coordinates to empty cells
+                if (
+                    (row, col) not in special_cells.values()
+                    and (row, col) not in arrow_locations
+                    and display[row, col] == EMPTY
+                ):
+                    ax.text(
+                        col + 0.5,
+                        row + 0.5,
+                        f"{row},{col}",
                         ha="center",
                         va="center",
                         color="black",
                         fontsize=7,
                     )
-        plt.show()  # type: ignore
+
+        plt.title("Gridworld State")
+        plt.show()
+
+
+def play():
+    tester = generator_config(num_times=0, use_tlcd=False, step_unit_factor=100)
+
+    env_settings = tester.env_settings
+    env_settings["p"] = 1.0
+
+    num_agents: int = tester.num_agents
+
+    game = MultiAgentGeneratorEnv(tester.rm_test_file, env_settings, tlcd=None)
+
+    s = game.get_initial_team_state()
+    print(s)
+
+    while True:
+        # Showing game
+        game.show(s)
+
+        # Getting action
+        a = np.full(num_agents, -1, dtype=int)
+
+        for i in range(num_agents):
+            print("\nAction{}? ".format(i + 1), end="")
+            usr_inp = input()
+            print()
+
+            if usr_inp not in STR_TO_ACTION:
+                print("forbidden action")
+                a[i] = STR_TO_ACTION["x"]
+            else:
+                print(STR_TO_ACTION[usr_inp])
+                a[i] = STR_TO_ACTION[usr_inp]
+
+        r, l, s = game.environment_step(s, a)
+
+        print("---------------------")
+        print("Next States: ", s)
+        print("Label: ", l)
+        print("Reward: ", r)
+        print("RM state: ", game.u)
+        print("---------------------")
+
+        if game.reward_machine.is_terminal_state(game.u):  # Game Over
+            break
+
+    game.show(s)
+
+
+# This code allow to play a game (for debugging purposes)
+if __name__ == "__main__":
+    play()

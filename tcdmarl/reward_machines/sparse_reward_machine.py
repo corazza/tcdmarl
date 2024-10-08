@@ -114,6 +114,10 @@ class SparseRewardMachine:
         for u1 in self.all_states:
             if self._is_terminal(u1):
                 self.terminal_states.add(u1)
+            if u1 not in self.delta_u:
+                self.delta_u[u1] = {}
+            if u1 not in self.delta_r:
+                self.delta_r[u1] = {}
         self.all_states = sorted(self.all_states)
 
     def calculate_reward(self, trace):
