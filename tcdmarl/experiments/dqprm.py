@@ -8,6 +8,7 @@ import numpy as np
 
 from tcdmarl.Agent.agent import Agent
 from tcdmarl.Environments.common import DecentralizedEnv
+from tcdmarl.Environments.generator.generator_env import GeneratorEnv
 from tcdmarl.Environments.routing.routing_env import RoutingEnv
 from tcdmarl.experiments.common import create_centralized_environment
 from tcdmarl.tester.learning_params import LearningParameters
@@ -23,10 +24,11 @@ def create_decentralized_environment(
             agent_list[agent_id].rm_file, agent_id, tester.env_settings, tester.tlcd
         ).use_prm(tester.use_prm)
     elif tester.experiment == "generator":
-        # return GeneratorEnv(agent_list[agent_id].rm_file, agent_id, tester.env_settings)
-        raise NotImplementedError
+        return GeneratorEnv(
+            agent_list[agent_id].rm_file, agent_id, tester.env_settings, tester.tlcd
+        )
     else:
-        raise ValueError('experiment should be one of: "routing"')
+        raise ValueError('experiment should be one of: "routing", "generator"')
 
 
 def run_qlearning_task(
@@ -76,9 +78,9 @@ def run_qlearning_task(
             if not (agent_list[i].is_task_complete):
                 current_u = agent_list[i].u
                 s, a = agent_list[i].get_next_action(epsilon, learning_params)
-                r, l, s_new = training_environments[i].environment_step(s, a)
+                r, label, s_new = training_environments[i].environment_step(s, a)
                 # a = training_environments[i].get_last_action() # due to MDP slip
-                agent_list[i].update_agent(s_new, a, r, l, learning_params)
+                agent_list[i].update_agent(s_new, a, r, label, learning_params)
 
                 (row, col) = (
                     training_environments[i].get_map().get_state_description(s_new)
@@ -87,15 +89,13 @@ def run_qlearning_task(
                     tester.add_training_stuck_step()
 
                 for u in agent_list[i].all_states:
-                    if not (u == current_u) and not (
-                        u in agent_list[i].terminal_states
-                    ):
-                        l = training_environments[i].get_mdp_label(s, s_new, u)
+                    if not (u == current_u) and u not in agent_list[i].terminal_states:
+                        label = training_environments[i].get_mdp_label(s, s_new, u)
                         # print('l', l)
                         r = 0
                         u_temp = u
                         u2 = u
-                        for e in l:
+                        for e in label:
                             # Get the new reward machine state and the reward of this step
                             u2 = agent_list[i].get_next_state(u_temp, e)
                             r = r + agent_list[i].get_reward(u_temp, u2)
@@ -142,6 +142,7 @@ def run_qlearning_task(
             testing_reward, trajectory, testing_steps = run_multi_agent_qlearning_test(
                 agent_list_copy,
                 tester,
+                epsilon,
                 learning_params,
                 testing_params,
                 show_print=show_print,
@@ -201,6 +202,7 @@ def run_qlearning_task(
 def run_multi_agent_qlearning_test(
     agent_list: List[Agent],
     tester: Tester,
+    training_epsilon: float,
     learning_params: LearningParameters,
     testing_params: TestingParameters,
     show_print: bool = True,
@@ -250,6 +252,9 @@ def run_multi_agent_qlearning_test(
 
     failed = False
 
+    # if tester.current_step > 0:
+    #     testing_env.show_graphic(s_team)
+
     # Starting interaction with the environment
     for _t in range(testing_params.num_steps):
         step = step + 1
@@ -263,19 +268,20 @@ def run_multi_agent_qlearning_test(
 
         # trajectory.append({'s' : np.array(s_team, dtype=int), 'a' : np.array(a_team, dtype=int), 'u_team': np.array(u_team, dtype=int), 'u': int(testing_env.u)})
 
-        r, l, s_team_next = testing_env.environment_step(s_team, a_team)
+        r, label, s_team_next = testing_env.environment_step(s_team, a_team)
         for s_agent in s_team_next:
             (row, col) = testing_env.get_map().get_state_description(s_agent)
             if (row, col) in testing_env.get_map().sinks:
                 stuck_counter += 1
-        # testing_env.show_graphic(s_team_next)
+        # if tester.current_step > 0:
+        #     testing_env.show_graphic(s_team_next)
 
         testing_reward = testing_reward + r
 
-        projected_l_dict: Dict[int, List[Any]] = {}
+        projected_l_dict: dict[int, list[str]] = {}
         for i in range(num_agents):
             # Agent i's projected label is the intersection of l with its local event set
-            projected_l_dict[i] = list(set(agent_list[i].local_event_set) & set(l))
+            projected_l_dict[i] = list(set(agent_list[i].local_event_set) & set(label))
             # Check if the event causes a transition from the agent's current RM state
             if not (agent_list[i].is_local_event_available(projected_l_dict[i])):
                 projected_l_dict[i] = []
@@ -311,7 +317,8 @@ def run_multi_agent_qlearning_test(
 
     if show_print:
         print(
-            f"Reward of {testing_reward} achieved in {step} steps. Current step: {tester.current_step} of {tester.total_steps} (stuck for {stuck_counter} steps, stuck in training for {tester.get_training_stuck_counter()/tester.current_step:.4f} steps)"
+            # f"Reward of {testing_reward} achieved in {step} steps. Current step: {tester.current_step} of {tester.total_steps} (stuck for {stuck_counter} steps, stuck in training for {tester.get_training_stuck_counter()/tester.current_step:.4f} steps, training epsilon={training_epsilon})"
+            f"Reward of {testing_reward} achieved in {step} steps. Current step: {tester.current_step} of {tester.total_steps} (training epsilon={training_epsilon})"
         )
 
     if failed:
@@ -378,7 +385,7 @@ def run_multi_agent_experiment(
         while not tester.stop_learning():
             num_episodes += 1
 
-            # epsilon = epsilon*0.99
+            epsilon = epsilon * 0.99
 
             run_qlearning_task(epsilon, tester, agent_list, show_print=show_print)
 

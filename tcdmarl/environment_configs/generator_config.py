@@ -26,7 +26,7 @@ def generator_config(num_times: int, use_tlcd: bool, step_unit_factor: int) -> T
         local_rm_files.append(RM_DIR / "generator" / f"proj_{i+1}.txt")
 
     # episode length: num_steps=step_unit, max_timesteps_per_task=num_steps
-    step_unit = 1000
+    step_unit = 100
 
     # configuration of testing params
     testing_params = TestingParameters()
@@ -40,7 +40,7 @@ def generator_config(num_times: int, use_tlcd: bool, step_unit_factor: int) -> T
         gamma=0.9,
         alpha=0.8,
         t_param=50,
-        initial_epsilon=0.0,
+        initial_epsilon=0.9,
         max_timesteps_per_task=testing_params.num_steps,
     )
 
@@ -60,7 +60,7 @@ def generator_config(num_times: int, use_tlcd: bool, step_unit_factor: int) -> T
     env_settings["Nr"] = 9
     env_settings["Nc"] = 9
 
-    env_settings["initial_states"] = [7 * 9 + 5, 9 + 1]
+    env_settings["initial_states"] = [7 * 9 + 5, 1 * 9 + 1]
     env_settings["walls"] = [
         (5, 3),
         (5, 4),

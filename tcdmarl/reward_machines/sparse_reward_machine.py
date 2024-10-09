@@ -131,7 +131,7 @@ class SparseRewardMachine:
             current_state = next_state
         return total_reward
 
-    def _is_terminal(self, u1):
+    def _is_terminal(self, u1: int):
         # Check if reward is given for reaching the state in question
         for u0 in self.delta_r:
             if u1 in self.delta_r[u0]:

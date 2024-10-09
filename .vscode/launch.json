@@ -93,7 +93,7 @@
                 "10",
                 "--plot-results-after-experiment",
                 "--step-unit-factor",
-                "100",
+                "50",
             ],
             "env": {
                 "PYTHONPATH": "${workspaceFolder}"
