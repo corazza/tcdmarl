@@ -1,3 +1,4 @@
+import math
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -52,6 +53,7 @@ class Tester:
         # Keep track of the number of learning/testing steps taken
         self.current_step = 0
         self.training_stuck_counter = 0
+        self.early_terminations: int = 0
 
         # Store the results here
         self.results: Dict[Any, Any] = {}
@@ -65,6 +67,9 @@ class Tester:
 
     def add_step(self):
         self.current_step += 1
+
+    def record_early_termintation(self):
+        self.early_terminations += 1
 
     def get_current_step(self):
         return self.current_step
@@ -80,3 +85,26 @@ class Tester:
 
     def stop_task(self, step: int) -> bool:
         return self.min_steps <= step
+
+    def current_epsilon(self) -> float:
+        """
+        Calculates the current epsilon value using exponential decay based on the proportion of total steps completed.
+        This method adjusts epsilon appropriately for different task configurations and total steps.
+
+        Returns
+        -------
+        float
+            The current epsilon value for the epsilon-greedy policy.
+        """
+        initial_epsilon = (
+            self.learning_params.initial_epsilon
+        )  # Starting value of epsilon, e.g., 1.0
+        min_epsilon = (
+            self.learning_params.final_epsilon
+        )  # Minimum value of epsilon, e.g., 0.1
+        decay_rate = -math.log(min_epsilon / initial_epsilon) / self.total_steps
+
+        epsilon = min_epsilon + (initial_epsilon - min_epsilon) * math.exp(
+            -decay_rate * self.current_step
+        )
+        return epsilon

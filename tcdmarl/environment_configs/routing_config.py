@@ -1,6 +1,7 @@
 from pathlib import Path
 from typing import Any, Dict, List
 
+from tcdmarl.consts import FINAL_EPISLON, INITIAL_EPISLON
 from tcdmarl.path_consts import RM_DIR
 from tcdmarl.tcrl.custom_dfas_neurips import dfa_paper_no_goal_after_flowers
 from tcdmarl.tester.learning_params import LearningParameters
@@ -39,7 +40,8 @@ def routing_config(num_times: int, use_tlcd: bool, step_unit_factor: int) -> Tes
         gamma=0.9,
         alpha=0.8,
         t_param=50,
-        initial_epsilon=0.9,
+        initial_epsilon=INITIAL_EPISLON,
+        final_epsilon=FINAL_EPISLON,
         max_timesteps_per_task=testing_params.num_steps,
     )
 

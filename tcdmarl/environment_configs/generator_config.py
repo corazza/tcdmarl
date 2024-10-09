@@ -1,9 +1,10 @@
 from pathlib import Path
 from typing import Any, List
 
+from tcdmarl.consts import FINAL_EPISLON, INITIAL_EPISLON
 from tcdmarl.Environments.common import Actions
+from tcdmarl.Environments.generator.causal_dfa import dfa_paper_no_drain_after_unlock
 from tcdmarl.path_consts import RM_DIR
-from tcdmarl.tcrl.custom_dfas_neurips import dfa_paper_no_goal_after_flowers
 from tcdmarl.tester.learning_params import LearningParameters
 from tcdmarl.tester.tester import Tester
 from tcdmarl.tester.tester_params import TestingParameters
@@ -26,7 +27,7 @@ def generator_config(num_times: int, use_tlcd: bool, step_unit_factor: int) -> T
         local_rm_files.append(RM_DIR / "generator" / f"proj_{i+1}.txt")
 
     # episode length: num_steps=step_unit, max_timesteps_per_task=num_steps
-    step_unit = 100
+    step_unit = 1000
 
     # configuration of testing params
     testing_params = TestingParameters()
@@ -40,7 +41,8 @@ def generator_config(num_times: int, use_tlcd: bool, step_unit_factor: int) -> T
         gamma=0.9,
         alpha=0.8,
         t_param=50,
-        initial_epsilon=0.9,
+        initial_epsilon=INITIAL_EPISLON,
+        final_epsilon=FINAL_EPISLON,
         max_timesteps_per_task=testing_params.num_steps,
     )
 
@@ -85,8 +87,7 @@ def generator_config(num_times: int, use_tlcd: bool, step_unit_factor: int) -> T
     env_settings["p"] = 0.98
 
     if use_tlcd:
-        raise NotImplementedError("TLCD not implemented for generator")
-        tlcd = dfa_paper_no_goal_after_flowers()
+        tlcd = dfa_paper_no_drain_after_unlock()
     else:
         tlcd = None
 

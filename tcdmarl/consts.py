@@ -1,6 +1,3 @@
-# For agent synchronization
-SYNCHRONIZATION_THRESH: float = 0.3
-
 EXPERIMENT_NAMES: list[str] = ["routing", "generator"]
 
 ALL_EXPERIMENT_NAMES: list[str] = [
@@ -8,3 +5,11 @@ ALL_EXPERIMENT_NAMES: list[str] = [
     for name in EXPERIMENT_NAMES
     for i in (0, 1)
 ]
+
+### AGENT SYNCHRONIZATION
+SYNCHRONIZATION_THRESH: float = 0.3
+
+### RL
+
+INITIAL_EPISLON: float = 1.0
+FINAL_EPISLON: float = 0.1

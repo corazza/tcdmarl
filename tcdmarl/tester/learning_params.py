@@ -1,5 +1,7 @@
 from types import NoneType
 
+from tcdmarl.consts import FINAL_EPISLON, INITIAL_EPISLON
+
 
 class LearningParameters:
     def __init__(
@@ -27,7 +29,8 @@ class LearningParameters:
         num_neurons: int = -1,
         alpha: float = 0.8,
         t_param: int = 50,
-        initial_epsilon: float = 0.0,
+        initial_epsilon: float = INITIAL_EPISLON,
+        final_epsilon: float = FINAL_EPISLON,
     ):
         """Parameters
         -------
@@ -83,6 +86,7 @@ class LearningParameters:
         self.alpha = alpha
         self.t_param = t_param  # TODO descriptive name
         self.initial_epsilon = initial_epsilon
+        self.final_epsilon = final_epsilon
         self.target_network_update_freq = target_network_update_freq
         # attributes for the tabular case
         self.tabular_case = tabular_case

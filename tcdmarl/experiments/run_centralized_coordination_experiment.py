@@ -1,8 +1,6 @@
 import time
 from typing import List, Tuple
 
-import matplotlib.pyplot as plt
-import numpy as np
 from numpy import int32
 from numpy.typing import NDArray
 
@@ -14,7 +12,6 @@ from tcdmarl.tester.tester_params import TestingParameters
 
 
 def run_qlearning_task(
-    epsilon: float,
     tester: Tester,
     centralized_agent: CentralizedAgent,
     show_print: bool = False,
@@ -26,8 +23,6 @@ def run_qlearning_task(
 
     Parameters
     ----------
-    epsilon : float
-        Numerical value in (0,1) representing likelihood of choosing a random action.
     tester : Tester object
         Object containing necessary information for current experiment.
     centralized_agent : CentralizedAgent object
@@ -55,10 +50,12 @@ def run_qlearning_task(
         # Perform a q-learning step.
         if not (centralized_agent.is_task_complete):
             current_u = centralized_agent.u
-            s, a = centralized_agent.get_next_action(epsilon, learning_params)
-            r, l, s_new = env.environment_step(s, a)
+            s, a = centralized_agent.get_next_action(
+                tester.current_epsilon(), learning_params
+            )
+            r, label, s_new = env.environment_step(s, a)
             # a = np.copy(env.last_action) # due to MDP slip
-            centralized_agent.update_agent(s_new, a, r, l, learning_params)
+            centralized_agent.update_agent(s_new, a, r, label, learning_params)
 
             for s_agent in s_new:
                 (row, col) = env.get_map().get_state_description(s_agent)
@@ -66,14 +63,12 @@ def run_qlearning_task(
                     tester.add_training_stuck_step()
 
             for u in centralized_agent.all_states:
-                if not (u == current_u) and not (
-                    u in centralized_agent.terminal_states
-                ):
-                    l = env.get_mdp_label(s, s_new, u)
+                if not (u == current_u) and u not in centralized_agent.terminal_states:
+                    label = env.get_mdp_label(s, s_new, u)
                     r = 0
                     u_temp = u
                     u2 = u
-                    for e in l:
+                    for e in label:
                         # Get the new reward machine state and the reward of this step
                         u2 = centralized_agent.get_next_state(u_temp, e)
                         r = r + centralized_agent.get_reward(u_temp, u2)
@@ -208,7 +203,7 @@ def run_centralized_qlearning_test(
 
         # Perform a step
         s, a = centralized_agent.get_next_action(-1.0, learning_params)
-        r, l, s_team_next = testing_env.environment_step(s, a)
+        r, label, s_team_next = testing_env.environment_step(s, a)
 
         for s_agent in s_team_next:
             (row, col) = testing_env.get_map().get_state_description(s_agent)
@@ -220,7 +215,7 @@ def run_centralized_qlearning_test(
         testing_reward = testing_reward + r
         # a = np.copy(testing_env.last_action)
         centralized_agent.update_agent(
-            s_team_next, a, r, l, learning_params, update_q_function=False
+            s_team_next, a, r, label, learning_params, update_q_function=False
         )
         if centralized_agent.is_task_complete:
             if centralized_agent.is_task_failed:
@@ -229,7 +224,8 @@ def run_centralized_qlearning_test(
 
     if show_print:
         print(
-            f"Reward of {testing_reward} achieved in {step} steps. Current step: {tester.current_step} of {tester.total_steps} (stuck for {stuck_counter} steps, stuck in training for {tester.get_training_stuck_counter()/tester.current_step:.4f} steps)"
+            # f"Reward of {testing_reward} achieved in {step} steps. Current step: {tester.current_step} of {tester.total_steps} (stuck for {stuck_counter} steps, stuck in training for {tester.get_training_stuck_counter()/tester.current_step:.4f} steps)"
+            f"Reward of {testing_reward} achieved in {step} steps. Current step: {tester.current_step} of {tester.total_steps} (training epsilon={tester.current_epsilon():.2}, early terminations={tester.early_terminations})"
         )
 
     if failed:
@@ -260,8 +256,6 @@ def run_centralized_experiment(
         Flag indicating whether or not to output text to the terminal.
     """
 
-    learning_params = tester.learning_params
-
     for t in range(num_times):
         # Reseting default step values
         tester.restart()
@@ -284,16 +278,10 @@ def run_centralized_experiment(
 
         num_episodes = 0
 
-        # Task loop
-        epsilon = learning_params.initial_epsilon
-
         while not tester.stop_learning():
             num_episodes += 1
 
-            # epsilon = epsilon*0.99
-
             run_qlearning_task(
-                epsilon,
                 tester,
                 centralized_agent,
                 show_print=show_print,

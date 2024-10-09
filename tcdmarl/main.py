@@ -191,20 +191,7 @@ def run_experiment(
     """
     assert experiment in ALL_EXPERIMENT_NAMES
 
-    if experiment == "routing":
-        # Get test object from config script
-        tester = routing_config(
-            num_times=num_trials,
-            use_tlcd=use_tlcd,
-            step_unit_factor=step_unit_factor,
-        )
-        tester = run_multi_agent_experiment(
-            tester=tester,
-            num_agents=tester.num_agents,
-            num_times=num_trials,
-            show_print=True,
-        )
-    elif experiment == "generator":
+    if experiment == "generator":
         # Get test object from config script
         tester = generator_config(
             num_times=num_trials,
@@ -217,8 +204,33 @@ def run_experiment(
             num_times=num_trials,
             show_print=True,
         )
-    else:
-        assert experiment == "centralized_routing"
+    elif experiment == "centralized_generator":
+        # Get test object from config script
+        tester = generator_config(
+            num_times=num_trials,
+            use_tlcd=use_tlcd,
+            step_unit_factor=step_unit_factor,
+        )
+        tester = run_centralized_experiment(
+            tester=tester,
+            _num_agents=tester.num_agents,
+            num_times=tester.num_times,
+            show_print=True,
+        )
+    elif experiment == "routing":
+        # Get test object from config script
+        tester = routing_config(
+            num_times=num_trials,
+            use_tlcd=use_tlcd,
+            step_unit_factor=step_unit_factor,
+        )
+        tester = run_multi_agent_experiment(
+            tester=tester,
+            num_agents=tester.num_agents,
+            num_times=num_trials,
+            show_print=True,
+        )
+    elif experiment == "centralized_routing":
         # Get test object from config script
         tester = routing_config(
             num_times=num_trials,
@@ -231,6 +243,8 @@ def run_experiment(
             num_times=tester.num_times,
             show_print=True,
         )
+    else:
+        raise ValueError(f"Experiment '{experiment}' not recognized.")
 
     # Save the results
     save_results(

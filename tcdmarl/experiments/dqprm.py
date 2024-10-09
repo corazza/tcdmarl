@@ -32,7 +32,7 @@ def create_decentralized_environment(
 
 
 def run_qlearning_task(
-    epsilon: float, tester: Tester, agent_list: List[Agent], show_print: bool = True
+    tester: Tester, agent_list: List[Agent], show_print: bool = True
 ):
     """
     This code runs one q-learning episode. q-functions, and accumulated reward values of agents
@@ -41,8 +41,6 @@ def run_qlearning_task(
 
     Parameters
     ----------
-    epsilon : float
-        Numerical value in (0,1) representing likelihood of choosing a random action.
     tester : Tester object
         Object containing necessary information for current experiment.
     agent_list : list of Agent objects
@@ -77,7 +75,9 @@ def run_qlearning_task(
             # Perform a q-learning step.
             if not (agent_list[i].is_task_complete):
                 current_u = agent_list[i].u
-                s, a = agent_list[i].get_next_action(epsilon, learning_params)
+                s, a = agent_list[i].get_next_action(
+                    tester.current_epsilon(), learning_params
+                )
                 r, label, s_new = training_environments[i].environment_step(s, a)
                 # a = training_environments[i].get_last_action() # due to MDP slip
                 agent_list[i].update_agent(s_new, a, r, label, learning_params)
@@ -142,7 +142,6 @@ def run_qlearning_task(
             testing_reward, trajectory, testing_steps = run_multi_agent_qlearning_test(
                 agent_list_copy,
                 tester,
-                epsilon,
                 learning_params,
                 testing_params,
                 show_print=show_print,
@@ -188,6 +187,7 @@ def run_qlearning_task(
             assert not all(agent.is_task_failed for agent in agent_list)
             for i in range(num_agents):
                 if agent_list[i].is_task_failed:
+                    tester.record_early_termintation()
                     agent_list[i].reset_state()
                     agent_list[i].initialize_reward_machine()
                     training_environments[i] = create_decentralized_environment(
@@ -202,7 +202,6 @@ def run_qlearning_task(
 def run_multi_agent_qlearning_test(
     agent_list: List[Agent],
     tester: Tester,
-    training_epsilon: float,
     learning_params: LearningParameters,
     testing_params: TestingParameters,
     show_print: bool = True,
@@ -318,7 +317,7 @@ def run_multi_agent_qlearning_test(
     if show_print:
         print(
             # f"Reward of {testing_reward} achieved in {step} steps. Current step: {tester.current_step} of {tester.total_steps} (stuck for {stuck_counter} steps, stuck in training for {tester.get_training_stuck_counter()/tester.current_step:.4f} steps, training epsilon={training_epsilon})"
-            f"Reward of {testing_reward} achieved in {step} steps. Current step: {tester.current_step} of {tester.total_steps} (training epsilon={training_epsilon})"
+            f"Reward of {testing_reward} achieved in {step} steps. Current step: {tester.current_step} of {tester.total_steps} (training epsilon={tester.current_epsilon():.2}, early terminations={tester.early_terminations})"
         )
 
     if failed:
@@ -379,15 +378,10 @@ def run_multi_agent_experiment(
 
         num_episodes = 0
 
-        # Task loop
-        epsilon = learning_params.initial_epsilon
-
         while not tester.stop_learning():
             num_episodes += 1
 
-            epsilon = epsilon * 0.99
-
-            run_qlearning_task(epsilon, tester, agent_list, show_print=show_print)
+            run_qlearning_task(tester, agent_list, show_print=show_print)
 
         # Backing up the results
         print("Finished iteration ", t)
