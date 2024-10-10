@@ -345,8 +345,6 @@ def run_multi_agent_experiment(
         Flag indicating whether or not to output text to the terminal.
     """
 
-    learning_params = tester.learning_params
-
     assert num_times > 0
     agent_list: List[Agent] = []
 

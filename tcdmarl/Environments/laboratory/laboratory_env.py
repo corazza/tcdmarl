@@ -9,18 +9,18 @@ from numpy.typing import NDArray
 from tcdmarl.consts import SYNCHRONIZATION_THRESH
 from tcdmarl.environment_configs.routing_config import routing_config
 from tcdmarl.Environments.common import STR_TO_ACTION, DecentralizedEnv
-from tcdmarl.Environments.routing.map import RoutingMap
+from tcdmarl.Environments.generator.map import GeneratorMap
 from tcdmarl.reward_machines.sparse_reward_machine import SparseRewardMachine
 from tcdmarl.shared_mem import PRM_TLCD_MAP
 from tcdmarl.tcrl.reward_machines.rm_common import CausalDFA, ProbabilisticRewardMachine
 from tcdmarl.utils import sparse_rm_to_prm
 
 
-class RoutingEnv(DecentralizedEnv):  # TODO rename to DecentralizedRoutingEnv
+class LaboratoryEnv(DecentralizedEnv):  # TODO rename to DecentralizedGeneratorEnv
     """
     Single-agent version.
 
-    Case study 1: routing environment with two agents and a switch door.
+    Case study 1: TODO
     """
 
     def __init__(
@@ -44,7 +44,7 @@ class RoutingEnv(DecentralizedEnv):  # TODO rename to DecentralizedRoutingEnv
             Dictionary of environment settings
         """
         self.agent_id = agent_id
-        self.map = RoutingMap(env_settings)
+        self.map = GeneratorMap(env_settings)
 
         self.s_i = self.map.initial_states[self.agent_id - 1]
 
@@ -59,7 +59,8 @@ class RoutingEnv(DecentralizedEnv):  # TODO rename to DecentralizedRoutingEnv
         self._use_prm: bool = False
         self.prm: ProbabilisticRewardMachine
 
-    def use_prm(self, value: bool) -> "RoutingEnv":
+    # TODO abstract into one of the env classes
+    def use_prm(self, value: bool) -> "GeneratorEnv":
         if not value:
             return self
 
@@ -68,7 +69,7 @@ class RoutingEnv(DecentralizedEnv):  # TODO rename to DecentralizedRoutingEnv
         else:
             save_path = f"{self._saved_rm_path}_NO_TLCD"
 
-        if not save_path in PRM_TLCD_MAP:
+        if save_path not in PRM_TLCD_MAP:
             self.prm = sparse_rm_to_prm(self.reward_machine)
             if self.tlcd is not None:
                 self.prm = self.prm.add_tlcd(self.tlcd, Path(save_path).name)
@@ -109,16 +110,16 @@ class RoutingEnv(DecentralizedEnv):  # TODO rename to DecentralizedRoutingEnv
         s_next : int
             Index of next state.
         """
-        routing_state = self.map.compute_state(self.agent_id, self.get_old_u(self.u))
+        generator_state = self.map.compute_state(self.agent_id, self.get_old_u(self.u))
         s_next, last_action = self.map.get_next_state(
-            s, a, self.agent_id, routing_state
+            s, a, self.agent_id, generator_state
         )
         self.last_action = last_action
 
-        l = self.get_mdp_label(s, s_next, self.u)
+        label = self.get_mdp_label(s, s_next, self.u)
         r: int = 0
 
-        for e in l:
+        for e in label:
             # Get the new reward machine state and the reward of this step
             if not self._use_prm:
                 u2 = self.reward_machine.get_next_state(self.u, e)
@@ -130,47 +131,34 @@ class RoutingEnv(DecentralizedEnv):  # TODO rename to DecentralizedRoutingEnv
             # Update the reward machine state
             self.u = u2
 
-        return r, l, s_next
+        return r, label, s_next
 
-    def get_map(self) -> RoutingMap:
+    def get_map(self) -> GeneratorMap:
         return self.map
 
-    def get_mdp_label(self, _s: int, s_next: int, _u: int) -> List[str]:
+    def get_mdp_label(self, _s: int, s_next: int, _u: int) -> list[str]:
         """
         Return the label of the next environment state and current RM state.
         """
         row, col = self.map.get_state_description(s_next)
 
-        l: List[str] = []
+        label: list[str] = []
 
         if self.agent_id == 0:
-            if (row, col) == self.map.env_settings["B1"]:
-                l.append("b1")
-            if (row, col) == self.map.env_settings["K1"] or (
-                row,
-                col,
-            ) == self.map.env_settings["K2"]:
-                l.append("k")
-            if (row, col) == self.map.env_settings["F1"]:
-                l.append("f")
-            if (row, col) == self.map.env_settings["F2"] and self.map.env_settings[
-                "enable_f2"
-            ]:
-                l.append("f")
-            if (row, col) == self.map.env_settings["goal_location"]:
-                l.append("g")
-
-            # Multiagent synchronization
-            if np.random.random() <= SYNCHRONIZATION_THRESH:
-                l.append("b2")
+            if (row, col) == self.map.env_settings["A"]:
+                label.append("a")
+            if (row, col) == self.map.env_settings["C"]:
+                label.append("c")
         else:
             assert self.agent_id == 1
-            if (row, col) == self.map.env_settings["B2"]:
-                l.append("b2")
-            if (row, col) == self.map.env_settings["B3"]:
-                l.append("b3")
+            # Multiagent synchronization
+            if np.random.random() <= SYNCHRONIZATION_THRESH:
+                label.append("c")
 
-        return l
+            if (row, col) == self.map.env_settings["B"]:
+                label.append("b")
+
+        return label
 
     def get_actions(self) -> NDArray[int32]:
         """
@@ -202,34 +190,35 @@ class RoutingEnv(DecentralizedEnv):  # TODO rename to DecentralizedRoutingEnv
         s : int
             Index of the current state
         """
-        display = np.zeros((self.map.number_of_rows, self.map.number_of_columns))
+        # Initialize the display grid with zeros
+        display = np.zeros(
+            (self.map.number_of_rows, self.map.number_of_columns), dtype=int
+        )
 
         # Display the locations of the walls
         for loc in self.map.env_settings["walls"]:
-            display[loc] = -1
+            display[loc] = -1  # Walls are marked as -1
 
-        display[self.map.env_settings["B1"]] = 9
-        display[self.map.env_settings["B2"]] = 9
-        display[self.map.env_settings["K1"]] = 9
-        display[self.map.env_settings["K2"]] = 9
-        display[self.map.env_settings["F1"]] = 9
-        display[self.map.env_settings["F2"]] = 9
-        display[self.map.env_settings["goal_location"]] = 9
+        # Mark special cells (A, B, C)
+        special_cells = ["A", "B", "C"]
+        for cell in special_cells:
+            display[self.map.env_settings[cell]] = 9  # Mark A, B, C as 9 in the grid
 
-        for loc in self.map.blue_tiles:
-            display[loc] = 8
-        for loc in self.map.orange_tiles:
-            display[loc] = 8
-        for loc in self.map.pink_tiles:
-            display[loc] = 8
-        for loc in self.map.green_tiles:
-            display[loc] = 8
+        # Mark yellow tiles
         for loc in self.map.yellow_tiles:
-            display[loc] = 8
+            display[loc] = 8  # Yellow tiles are marked as 8
+
+        # Display one-way doors
+        one_way_doors = self.map.env_settings["oneway"]
+        for _direction, locations in one_way_doors.items():
+            for loc in locations:
+                display[loc] = (
+                    5  # Mark one-way doors as 5 (you can change the number if desired)
+                )
 
         # Display the location of the agent in the world
         row, col = self.map.get_state_description(s)
-        display[row, col] = self.agent_id
+        display[row, col] = self.agent_id + 1
 
         print(display)
 

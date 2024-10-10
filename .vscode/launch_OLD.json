@@ -5,6 +5,21 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Show MDP: Routing",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/tcdmarl/main.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--experiment",
+                "routing",
+                "--show"
+            ],
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            }
+        },
+        {
             "name": "Show MDP: Generator",
             "type": "debugpy",
             "request": "launch",
@@ -13,21 +28,6 @@
             "args": [
                 "--experiment",
                 "generator",
-                "--show"
-            ],
-            "env": {
-                "PYTHONPATH": "${workspaceFolder}"
-            }
-        },
-        {
-            "name": "Show MDP: Laboratory",
-            "type": "debugpy",
-            "request": "launch",
-            "program": "${workspaceFolder}/tcdmarl/main.py",
-            "console": "integratedTerminal",
-            "args": [
-                "--experiment",
-                "laboratory",
                 "--show"
             ],
             "env": {
@@ -73,28 +73,6 @@
                 "10",
                 "--step-unit-factor",
                 "500",
-            ],
-            "env": {
-                "PYTHONPATH": "${workspaceFolder}"
-            }
-        },
-        {
-            "name": "Laboratory (decentralized, TL-CD)",
-            "type": "debugpy",
-            "request": "launch",
-            "program": "${workspaceFolder}/tcdmarl/main.py",
-            "console": "integratedTerminal",
-            "args": [
-                "--collection",
-                "${input:collection}",
-                "--tlcd",
-                "--experiment",
-                "laboratory",
-                "--num-trials",
-                "50",
-                "--plot-results-after-experiment",
-                "--step-unit-factor",
-                "20",
             ],
             "env": {
                 "PYTHONPATH": "${workspaceFolder}"

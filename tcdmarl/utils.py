@@ -1,8 +1,20 @@
+from pathlib import Path
 from typing import List
 
 from tcdmarl.reward_machines.sparse_reward_machine import SparseRewardMachine
 from tcdmarl.tcrl.reward_machines.rm_builder import ProbabilisticRMBuilder
 from tcdmarl.tcrl.reward_machines.rm_common import ProbabilisticRewardMachine
+
+
+def compute_caching_name(saved_rm_path: Path, tlcd_suffix: str = "TLCD") -> str:
+    # Extract the parent directory name and the file name
+    parent_dir = saved_rm_path.parent.name  # e.g., 'laboratory'
+    file_name = saved_rm_path.name  # e.g., 'proj_1.txt'
+
+    # Combine them into the desired format
+    caching_str = f"{parent_dir}_{file_name}_{tlcd_suffix}"
+
+    return caching_str
 
 
 def sparse_rm_to_prm(sparse_rm: SparseRewardMachine) -> ProbabilisticRewardMachine:

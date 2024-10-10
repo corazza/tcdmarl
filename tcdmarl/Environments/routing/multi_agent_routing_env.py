@@ -14,7 +14,7 @@ from tcdmarl.Environments.routing.map import RoutingMap
 from tcdmarl.reward_machines.sparse_reward_machine import SparseRewardMachine
 from tcdmarl.shared_mem import PRM_TLCD_MAP
 from tcdmarl.tcrl.reward_machines.rm_common import CausalDFA, ProbabilisticRewardMachine
-from tcdmarl.tcrl.utils import sparse_rm_to_prm
+from tcdmarl.utils import sparse_rm_to_prm
 
 
 class MultiAgentRoutingEnv(CentralizedEnv):  # TODO rename to CentralizedRoutingEnv

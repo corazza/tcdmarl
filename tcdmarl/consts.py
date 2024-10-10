@@ -1,4 +1,4 @@
-EXPERIMENT_NAMES: list[str] = ["routing", "generator"]
+EXPERIMENT_NAMES: list[str] = ["routing", "generator", "laboratory"]
 
 ALL_EXPERIMENT_NAMES: list[str] = [
     name if i == 0 else "centralized_" + name

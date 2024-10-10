@@ -16,6 +16,7 @@ from matplotlib.ticker import FuncFormatter, MaxNLocator
 from tcdmarl.consts import ALL_EXPERIMENT_NAMES
 from tcdmarl.defaults import DEFAULT_NUM_SEPARATE_TRIALS, DEFAULT_STEP_UNIT_FACTOR
 from tcdmarl.environment_configs.generator_config import generator_config
+from tcdmarl.environment_configs.laboratory_config import laboratory_config
 from tcdmarl.environment_configs.routing_config import routing_config
 from tcdmarl.experiments.common import create_centralized_environment
 from tcdmarl.experiments.dqprm import run_multi_agent_experiment
@@ -217,6 +218,19 @@ def run_experiment(
             num_times=tester.num_times,
             show_print=True,
         )
+    elif experiment == "laboratory":
+        # Get test object from config script
+        tester = laboratory_config(
+            num_times=num_trials,
+            use_tlcd=use_tlcd,
+            step_unit_factor=step_unit_factor,
+        )
+        tester = run_multi_agent_experiment(
+            tester=tester,
+            num_agents=tester.num_agents,
+            num_times=num_trials,
+            show_print=True,
+        )
     elif experiment == "routing":
         # Get test object from config script
         tester = routing_config(
@@ -378,6 +392,18 @@ def main(
                     tester, use_prm=False, tlcd=tester.tlcd
                 )
                 testing_env.show_graphic(testing_env.get_initial_team_state())
+            elif experiment == "laboratory":
+                tester = laboratory_config(
+                    num_times=num_trials,
+                    use_tlcd=tlcd,
+                    step_unit_factor=step_unit_factor,
+                )
+                testing_env = create_centralized_environment(
+                    tester, use_prm=False, tlcd=tester.tlcd
+                )
+                testing_env.show_graphic(testing_env.get_initial_team_state())
+            else:
+                raise ValueError(f"Experiment '{experiment}' not recognized.")
         else:
             print(f'Running experiment: "{experiment}" (use_tlcd={tlcd})')
             run_experiment(

@@ -292,7 +292,7 @@ class ProbabilisticRewardMachine(RewardMachine):
         assert False
 
     def add_tlcd(
-        self, causal_dfa: "CausalDFA", caching: str
+        self, causal_dfa: "CausalDFA", cache_name: str
     ) -> "ProbabilisticRewardMachine":
         value_iteration_params: RunConfig = RunConfig(
             agent_name="----",
@@ -324,7 +324,7 @@ class ProbabilisticRewardMachine(RewardMachine):
         # )
 
         # Construct the path to the cache file
-        cache_file_path = WORK_DIR / f"{caching}.p"
+        cache_file_path = WORK_DIR / f"{cache_name}.p"
 
         # Check if the cache file exists
         if cache_file_path.exists():

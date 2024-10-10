@@ -10,8 +10,8 @@ from numpy.typing import NDArray
 from tcdmarl.reward_machines.sparse_reward_machine import SparseRewardMachine
 from tcdmarl.shared_mem import PRM_TLCD_MAP
 from tcdmarl.tcrl.reward_machines.rm_common import CausalDFA, ProbabilisticRewardMachine
-from tcdmarl.tcrl.utils import sparse_rm_to_prm
 from tcdmarl.tester.learning_params import LearningParameters
+from tcdmarl.utils import sparse_rm_to_prm
 
 
 class CentralizedAgent:
