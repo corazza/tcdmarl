@@ -10,7 +10,7 @@ class ExperimentConfig(TypedDict):
     # Use centralized or decentralized
     centralized: bool
 
-    # Use the TL-CD to expedite learning
+    # Use a TL-CD to expedite learning?
     use_tlcd: bool
 
     # Episode length

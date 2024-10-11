@@ -1,6 +1,8 @@
+import json
 from pathlib import Path
-from typing import List
+from typing import List, Type, TypeVar, cast
 
+from tcdmarl.config import ExperimentConfig
 from tcdmarl.reward_machines.sparse_reward_machine import SparseRewardMachine
 from tcdmarl.tcrl.reward_machines.rm_builder import ProbabilisticRMBuilder
 from tcdmarl.tcrl.reward_machines.rm_common import ProbabilisticRewardMachine
@@ -58,3 +60,17 @@ def sparse_rm_to_prm(sparse_rm: SparseRewardMachine) -> ProbabilisticRewardMachi
 
     prm = builder.build()
     return prm
+
+
+T = TypeVar("T")
+
+
+def load_typed_dict(typed_dict_class: Type[T], file_path: Path) -> T:
+    with open(file_path, "r") as json_file:
+        return cast(typed_dict_class, json.load(json_file))
+
+
+def experiment_name(config: ExperimentConfig) -> str:
+    use_tlcd_str = "TLCD" if config["use_tlcd"] else "NO_TLCD"
+    centralized_str = "CENTRALIZED" if config["centralized"] else "DECENTRALIZED"
+    return f"{config['environment_name']}_{centralized_str}_{use_tlcd_str}"

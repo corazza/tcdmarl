@@ -1,0 +1,363 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Show MDP: Generator",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/tcdmarl/main.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--experiment",
+                "generator",
+                "--show"
+            ],
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            }
+        },
+        {
+            "name": "Show MDP: Laboratory",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/tcdmarl/main.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--experiment",
+                "laboratory",
+                "--show"
+            ],
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            }
+        },
+        {
+            "name": "Play: Generator",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/tcdmarl/Environments/generator/multi_agent_generator_env.py",
+            "console": "integratedTerminal",
+            "args": [],
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            }
+        },
+        {
+            "name": "Play: Laboratory",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/tcdmarl/Environments/laboratory/multi_agent_laboratory_env.py",
+            "console": "integratedTerminal",
+            "args": [],
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            }
+        },
+        {
+            "name": "Plot results",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/tcdmarl/main.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--plot-results",
+                "${input:filePath}"
+            ],
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            }
+        },
+        {
+            "name": "Run all experiments",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/tcdmarl/main.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--collection",
+                "${input:collection}",
+                "--all-experiments",
+                "--num-trials",
+                "10",
+                "--step-unit-factor",
+                "500",
+            ],
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            }
+        },
+        {
+            "name": "Laboratory (decentralized, TL-CD)",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/tcdmarl/main.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--collection",
+                "${input:collection}",
+                "--tlcd",
+                "--experiment",
+                "laboratory",
+                "--num-trials",
+                "50",
+                "--plot-results-after-experiment",
+                "--step-unit-factor",
+                "30",
+            ],
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            }
+        },
+        {
+            "name": "Laboratory (decentralized, no TL-CD)",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/tcdmarl/main.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--collection",
+                "${input:collection}",
+                "--experiment",
+                "laboratory",
+                "--num-trials",
+                "50",
+                "--plot-results-after-experiment",
+                "--step-unit-factor",
+                "30",
+            ],
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            }
+        },
+        {
+            "name": "Laboratory (centralized, TL-CD)",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/tcdmarl/main.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--collection",
+                "${input:collection}",
+                "--tlcd",
+                "--experiment",
+                "centralized_laboratory",
+                "--num-trials",
+                "10",
+                "--plot-results-after-experiment",
+                "--step-unit-factor",
+                "500",
+            ],
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            }
+        },
+        {
+            "name": "Laboratory (centralized, no TL-CD)",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/tcdmarl/main.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--collection",
+                "${input:collection}",
+                "--experiment",
+                "centralized_laboratory",
+                "--num-trials",
+                "10",
+                "--plot-results-after-experiment",
+                "--step-unit-factor",
+                "2000",
+            ],
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            }
+        },
+        {
+            "name": "Generator (decentralized, TL-CD)",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/tcdmarl/main.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--collection",
+                "${input:collection}",
+                "--tlcd",
+                "--experiment",
+                "generator",
+                "--num-trials",
+                "50",
+                "--plot-results-after-experiment",
+                "--step-unit-factor",
+                "20",
+            ],
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            }
+        },
+        {
+            "name": "Generator (decentralized, no TL-CD)",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/tcdmarl/main.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--collection",
+                "${input:collection}",
+                "--experiment",
+                "generator",
+                "--num-trials",
+                "50",
+                "--plot-results-after-experiment",
+                "--step-unit-factor",
+                "20",
+            ],
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            }
+        },
+        {
+            "name": "Generator (centralized, TL-CD)",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/tcdmarl/main.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--collection",
+                "${input:collection}",
+                "--tlcd",
+                "--experiment",
+                "centralized_generator",
+                "--num-trials",
+                "10",
+                "--plot-results-after-experiment",
+                "--step-unit-factor",
+                "100",
+            ],
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            }
+        },
+        {
+            "name": "Generator (centralized, no TL-CD)",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/tcdmarl/main.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--collection",
+                "${input:collection}",
+                "--experiment",
+                "centralized_generator",
+                "--num-trials",
+                "10",
+                "--plot-results-after-experiment",
+                "--step-unit-factor",
+                "100",
+            ],
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            }
+        },
+        {
+            "name": "Routing (decentralized, TL-CD)",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/tcdmarl/main.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--collection",
+                "${input:collection}",
+                "--tlcd",
+                "--experiment",
+                "routing",
+                "--num-trials",
+                "10",
+                "--plot-results-after-experiment",
+                "--step-unit-factor",
+                "100",
+            ],
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            }
+        },
+        {
+            "name": "Routing (decentralized, no TL-CD)",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/tcdmarl/main.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--collection",
+                "${input:collection}",
+                "--experiment",
+                "routing",
+                "--num-trials",
+                "10",
+                "--plot-results-after-experiment",
+                "--step-unit-factor",
+                "100",
+            ],
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            }
+        },
+        {
+            "name": "Routing (centralized, TL-CD)",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/tcdmarl/main.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--collection",
+                "${input:collection}",
+                "--tlcd",
+                "--experiment",
+                "centralized_routing",
+                "--num-trials",
+                "10",
+                "--plot-results-after-experiment",
+                "--step-unit-factor",
+                "1000",
+            ],
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            }
+        },
+        {
+            "name": "Routing (centralized, no TL-CD)",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/tcdmarl/main.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--collection",
+                "${input:collection}",
+                "--experiment",
+                "centralized_routing",
+                "--num-trials",
+                "10",
+                "--plot-results-after-experiment",
+                "--step-unit-factor",
+                "1000",
+            ],
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            }
+        },
+    ],
+    "inputs": [
+        {
+            "id": "filePath",
+            "type": "promptString",
+            "description": "Please enter the file path"
+        },
+        {
+            "id": "collection",
+            "type": "promptString",
+            "description": "Please enter the experiment collection name"
+        }
+    ]
+}

@@ -1,0 +1,61 @@
+{
+    "num_trials": 10,
+    "experiments": [
+        {
+            "environment_name": "generator",
+            "centralized": false,
+            "use_tlcd": false,
+            "episode_length": 1000,
+            "num_episodes": 2
+        },
+        {
+            "environment_name": "generator",
+            "centralized": false,
+            "use_tlcd": true,
+            "episode_length": 1000,
+            "num_episodes": 2
+        },
+        {
+            "environment_name": "generator",
+            "centralized": true,
+            "use_tlcd": false,
+            "episode_length": 1000,
+            "num_episodes": 2
+        },
+        {
+            "environment_name": "generator",
+            "centralized": true,
+            "use_tlcd": true,
+            "episode_length": 1000,
+            "num_episodes": 2
+        },
+        {
+            "environment_name": "laboratory",
+            "centralized": false,
+            "use_tlcd": false,
+            "episode_length": 1000,
+            "num_episodes": 2
+        },
+        {
+            "environment_name": "laboratory",
+            "centralized": false,
+            "use_tlcd": true,
+            "episode_length": 1000,
+            "num_episodes": 2
+        },
+        {
+            "environment_name": "laboratory",
+            "centralized": true,
+            "use_tlcd": false,
+            "episode_length": 1000,
+            "num_episodes": 2
+        },
+        {
+            "environment_name": "laboratory",
+            "centralized": true,
+            "use_tlcd": true,
+            "episode_length": 1000,
+            "num_episodes": 2
+        }
+    ]
+}

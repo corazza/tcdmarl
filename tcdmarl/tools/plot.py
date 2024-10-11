@@ -13,6 +13,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib.ticker import FuncFormatter, MaxNLocator
 
+from tcdmarl.config import ExperimentConfig
 from tcdmarl.consts import ALL_EXPERIMENT_NAMES
 from tcdmarl.defaults import DEFAULT_NUM_SEPARATE_TRIALS, DEFAULT_STEP_UNIT_FACTOR
 from tcdmarl.environment_configs.generator_config import generator_config
@@ -25,6 +26,7 @@ from tcdmarl.experiments.run_centralized_coordination_experiment import (
 )
 from tcdmarl.path_consts import RESULTS_DIR
 from tcdmarl.tester.tester import Tester
+from tcdmarl.utils import experiment_name
 
 
 def save_results(collection: str, experiment: str, use_tlcd: bool, tester: Tester):
@@ -83,8 +85,7 @@ def save_to_csv(
 
 def plot_multi_agent_results(
     collection: str,
-    experiment: str,
-    use_tlcd: bool,
+    config: ExperimentConfig,
     tester: Tester,
     save_plot: bool,
     show_plot: bool,
@@ -152,11 +153,9 @@ def plot_multi_agent_results(
 
     # Save as image to results
     if save_plot:
-        use_tlcd_str = "tlcd" if use_tlcd else "no_tlcd"
         day_month = datetime.now().strftime("%Y-%m-%d")
-        experiment_data_path = (
-            RESULTS_DIR / day_month / collection / f"{experiment}_{use_tlcd_str}"
-        )
+        directory = experiment_name(config)
+        experiment_data_path = RESULTS_DIR / day_month / collection / directory
         experiment_data_path.mkdir(parents=True, exist_ok=True)
 
         now = datetime.now()
@@ -281,7 +280,7 @@ def run_experiment(
     # Plot the results
     plot_multi_agent_results(
         collection=collection,
-        experiment=experiment,
+        environment_name=experiment,
         use_tlcd=use_tlcd,
         tester=tester,
         show_plot=show_plot,
@@ -293,13 +292,13 @@ def run_experiment(
 
 @click.command()
 @click.option(
-    "--experiment",
-    required=False,
-    help='The experiment to run. Options: "routing", "centralized_routing"',
+    "--config",
+    required=True,
+    help="Path to the config file to use",
 )
 @click.option(
     "--collection",
-    required=False,
+    required=True,
     help="Experiment collection name",
 )
 @click.option(
@@ -359,7 +358,7 @@ def main(
             tester = load_results(plot_results)
             plot_multi_agent_results(
                 collection="none",
-                experiment=tester.experiment,
+                environment_name=tester.experiment,
                 use_tlcd=tester.tlcd is not None,
                 tester=tester,
                 save_plot=False,

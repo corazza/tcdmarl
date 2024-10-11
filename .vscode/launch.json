@@ -71,277 +71,34 @@
             }
         },
         {
-            "name": "Run all experiments",
+            "name": "Train: debug",
             "type": "debugpy",
             "request": "launch",
-            "program": "${workspaceFolder}/tcdmarl/main.py",
+            "program": "${workspaceFolder}/tcdmarl/tools/train.py",
             "console": "integratedTerminal",
             "args": [
+                "--config",
+                "configs/debug.json",
+                "--collection",
+                "debug",
+                "--all-experiments",
+            ],
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            }
+        },
+        {
+            "name": "Train: paper",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/tcdmarl/tools/train.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--config",
+                "configs/paper.json",
                 "--collection",
                 "${input:collection}",
                 "--all-experiments",
-                "--num-trials",
-                "10",
-                "--step-unit-factor",
-                "500",
-            ],
-            "env": {
-                "PYTHONPATH": "${workspaceFolder}"
-            }
-        },
-        {
-            "name": "Laboratory (decentralized, TL-CD)",
-            "type": "debugpy",
-            "request": "launch",
-            "program": "${workspaceFolder}/tcdmarl/main.py",
-            "console": "integratedTerminal",
-            "args": [
-                "--collection",
-                "${input:collection}",
-                "--tlcd",
-                "--experiment",
-                "laboratory",
-                "--num-trials",
-                "50",
-                "--plot-results-after-experiment",
-                "--step-unit-factor",
-                "30",
-            ],
-            "env": {
-                "PYTHONPATH": "${workspaceFolder}"
-            }
-        },
-        {
-            "name": "Laboratory (decentralized, no TL-CD)",
-            "type": "debugpy",
-            "request": "launch",
-            "program": "${workspaceFolder}/tcdmarl/main.py",
-            "console": "integratedTerminal",
-            "args": [
-                "--collection",
-                "${input:collection}",
-                "--experiment",
-                "laboratory",
-                "--num-trials",
-                "50",
-                "--plot-results-after-experiment",
-                "--step-unit-factor",
-                "30",
-            ],
-            "env": {
-                "PYTHONPATH": "${workspaceFolder}"
-            }
-        },
-        {
-            "name": "Laboratory (centralized, TL-CD)",
-            "type": "debugpy",
-            "request": "launch",
-            "program": "${workspaceFolder}/tcdmarl/main.py",
-            "console": "integratedTerminal",
-            "args": [
-                "--collection",
-                "${input:collection}",
-                "--tlcd",
-                "--experiment",
-                "centralized_laboratory",
-                "--num-trials",
-                "10",
-                "--plot-results-after-experiment",
-                "--step-unit-factor",
-                "500",
-            ],
-            "env": {
-                "PYTHONPATH": "${workspaceFolder}"
-            }
-        },
-        {
-            "name": "Laboratory (centralized, no TL-CD)",
-            "type": "debugpy",
-            "request": "launch",
-            "program": "${workspaceFolder}/tcdmarl/main.py",
-            "console": "integratedTerminal",
-            "args": [
-                "--collection",
-                "${input:collection}",
-                "--experiment",
-                "centralized_laboratory",
-                "--num-trials",
-                "10",
-                "--plot-results-after-experiment",
-                "--step-unit-factor",
-                "2000",
-            ],
-            "env": {
-                "PYTHONPATH": "${workspaceFolder}"
-            }
-        },
-        {
-            "name": "Generator (decentralized, TL-CD)",
-            "type": "debugpy",
-            "request": "launch",
-            "program": "${workspaceFolder}/tcdmarl/main.py",
-            "console": "integratedTerminal",
-            "args": [
-                "--collection",
-                "${input:collection}",
-                "--tlcd",
-                "--experiment",
-                "generator",
-                "--num-trials",
-                "50",
-                "--plot-results-after-experiment",
-                "--step-unit-factor",
-                "20",
-            ],
-            "env": {
-                "PYTHONPATH": "${workspaceFolder}"
-            }
-        },
-        {
-            "name": "Generator (decentralized, no TL-CD)",
-            "type": "debugpy",
-            "request": "launch",
-            "program": "${workspaceFolder}/tcdmarl/main.py",
-            "console": "integratedTerminal",
-            "args": [
-                "--collection",
-                "${input:collection}",
-                "--experiment",
-                "generator",
-                "--num-trials",
-                "50",
-                "--plot-results-after-experiment",
-                "--step-unit-factor",
-                "20",
-            ],
-            "env": {
-                "PYTHONPATH": "${workspaceFolder}"
-            }
-        },
-        {
-            "name": "Generator (centralized, TL-CD)",
-            "type": "debugpy",
-            "request": "launch",
-            "program": "${workspaceFolder}/tcdmarl/main.py",
-            "console": "integratedTerminal",
-            "args": [
-                "--collection",
-                "${input:collection}",
-                "--tlcd",
-                "--experiment",
-                "centralized_generator",
-                "--num-trials",
-                "10",
-                "--plot-results-after-experiment",
-                "--step-unit-factor",
-                "100",
-            ],
-            "env": {
-                "PYTHONPATH": "${workspaceFolder}"
-            }
-        },
-        {
-            "name": "Generator (centralized, no TL-CD)",
-            "type": "debugpy",
-            "request": "launch",
-            "program": "${workspaceFolder}/tcdmarl/main.py",
-            "console": "integratedTerminal",
-            "args": [
-                "--collection",
-                "${input:collection}",
-                "--experiment",
-                "centralized_generator",
-                "--num-trials",
-                "10",
-                "--plot-results-after-experiment",
-                "--step-unit-factor",
-                "100",
-            ],
-            "env": {
-                "PYTHONPATH": "${workspaceFolder}"
-            }
-        },
-        {
-            "name": "Routing (decentralized, TL-CD)",
-            "type": "debugpy",
-            "request": "launch",
-            "program": "${workspaceFolder}/tcdmarl/main.py",
-            "console": "integratedTerminal",
-            "args": [
-                "--collection",
-                "${input:collection}",
-                "--tlcd",
-                "--experiment",
-                "routing",
-                "--num-trials",
-                "10",
-                "--plot-results-after-experiment",
-                "--step-unit-factor",
-                "100",
-            ],
-            "env": {
-                "PYTHONPATH": "${workspaceFolder}"
-            }
-        },
-        {
-            "name": "Routing (decentralized, no TL-CD)",
-            "type": "debugpy",
-            "request": "launch",
-            "program": "${workspaceFolder}/tcdmarl/main.py",
-            "console": "integratedTerminal",
-            "args": [
-                "--collection",
-                "${input:collection}",
-                "--experiment",
-                "routing",
-                "--num-trials",
-                "10",
-                "--plot-results-after-experiment",
-                "--step-unit-factor",
-                "100",
-            ],
-            "env": {
-                "PYTHONPATH": "${workspaceFolder}"
-            }
-        },
-        {
-            "name": "Routing (centralized, TL-CD)",
-            "type": "debugpy",
-            "request": "launch",
-            "program": "${workspaceFolder}/tcdmarl/main.py",
-            "console": "integratedTerminal",
-            "args": [
-                "--collection",
-                "${input:collection}",
-                "--tlcd",
-                "--experiment",
-                "centralized_routing",
-                "--num-trials",
-                "10",
-                "--plot-results-after-experiment",
-                "--step-unit-factor",
-                "1000",
-            ],
-            "env": {
-                "PYTHONPATH": "${workspaceFolder}"
-            }
-        },
-        {
-            "name": "Routing (centralized, no TL-CD)",
-            "type": "debugpy",
-            "request": "launch",
-            "program": "${workspaceFolder}/tcdmarl/main.py",
-            "console": "integratedTerminal",
-            "args": [
-                "--collection",
-                "${input:collection}",
-                "--experiment",
-                "centralized_routing",
-                "--num-trials",
-                "10",
-                "--plot-results-after-experiment",
-                "--step-unit-factor",
-                "1000",
             ],
             "env": {
                 "PYTHONPATH": "${workspaceFolder}"

@@ -1,6 +1,7 @@
 from pathlib import Path
 from typing import Any, List
 
+from tcdmarl.config import ExperimentConfig
 from tcdmarl.consts import FINAL_EPISLON, INITIAL_EPISLON
 from tcdmarl.Environments.common import Actions
 from tcdmarl.Environments.laboratory.causal_dfa_block import dfa_paper_specimen
@@ -10,7 +11,7 @@ from tcdmarl.tester.tester import Tester
 from tcdmarl.tester.tester_params import TestingParameters
 
 
-def laboratory_config(num_times: int, use_tlcd: bool, step_unit_factor: int) -> Tester:
+def laboratory_config(num_times: int, config: ExperimentConfig) -> Tester:
     """
     Function setting the experiment parameters and environment.
 
@@ -27,7 +28,7 @@ def laboratory_config(num_times: int, use_tlcd: bool, step_unit_factor: int) -> 
         local_rm_files.append(RM_DIR / "laboratory" / f"proj_{i+1}.txt")
 
     # episode length: num_steps=step_unit, max_timesteps_per_task=num_steps
-    step_unit = 1000
+    step_unit = config["episode_length"]
 
     # configuration of testing params
     testing_params = TestingParameters()
@@ -53,6 +54,7 @@ def laboratory_config(num_times: int, use_tlcd: bool, step_unit_factor: int) -> 
     # enough to converge for centralized
     # total_steps = 500 * step_unit
     # from argument
+    step_unit_factor = config["num_episodes"]
     total_steps = step_unit_factor * step_unit
     min_steps = 1
 
@@ -105,7 +107,7 @@ def laboratory_config(num_times: int, use_tlcd: bool, step_unit_factor: int) -> 
 
     env_settings["p"] = 0.98
 
-    if use_tlcd:
+    if config["use_tlcd"]:
         tlcd = dfa_paper_specimen()
     else:
         tlcd = None
