@@ -46,6 +46,17 @@
             }
         },
         {
+            "name": "Play: Laboratory",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/tcdmarl/Environments/laboratory/multi_agent_laboratory_env.py",
+            "console": "integratedTerminal",
+            "args": [],
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            }
+        },
+        {
             "name": "Plot results",
             "type": "debugpy",
             "request": "launch",
@@ -94,7 +105,71 @@
                 "50",
                 "--plot-results-after-experiment",
                 "--step-unit-factor",
-                "20",
+                "30",
+            ],
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            }
+        },
+        {
+            "name": "Laboratory (decentralized, no TL-CD)",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/tcdmarl/main.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--collection",
+                "${input:collection}",
+                "--experiment",
+                "laboratory",
+                "--num-trials",
+                "50",
+                "--plot-results-after-experiment",
+                "--step-unit-factor",
+                "30",
+            ],
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            }
+        },
+        {
+            "name": "Laboratory (centralized, TL-CD)",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/tcdmarl/main.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--collection",
+                "${input:collection}",
+                "--tlcd",
+                "--experiment",
+                "centralized_laboratory",
+                "--num-trials",
+                "10",
+                "--plot-results-after-experiment",
+                "--step-unit-factor",
+                "500",
+            ],
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            }
+        },
+        {
+            "name": "Laboratory (centralized, no TL-CD)",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/tcdmarl/main.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--collection",
+                "${input:collection}",
+                "--experiment",
+                "centralized_laboratory",
+                "--num-trials",
+                "10",
+                "--plot-results-after-experiment",
+                "--step-unit-factor",
+                "2000",
             ],
             "env": {
                 "PYTHONPATH": "${workspaceFolder}"

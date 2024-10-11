@@ -3,7 +3,7 @@ from typing import Any, List
 
 from tcdmarl.consts import FINAL_EPISLON, INITIAL_EPISLON
 from tcdmarl.Environments.common import Actions
-from tcdmarl.Environments.laboratory.causal_dfa import dfa_paper_sync_next_sensors
+from tcdmarl.Environments.laboratory.causal_dfa_block import dfa_paper_specimen
 from tcdmarl.path_consts import RM_DIR
 from tcdmarl.tester.learning_params import LearningParameters
 from tcdmarl.tester.tester import Tester
@@ -59,35 +59,54 @@ def laboratory_config(num_times: int, use_tlcd: bool, step_unit_factor: int) -> 
     # Set the environment settings for the experiment
     # TODO fix this mess (Dict[str, Any])
     env_settings: dict[str, Any] = dict()
-    env_settings["Nr"] = 9
-    env_settings["Nc"] = 9
+    env_settings["Nr"] = 11
+    env_settings["Nc"] = 15
 
-    env_settings["initial_states"] = [7 * 9 + 5, 1 * 9 + 1]
+    env_settings["initial_states"] = [4 * 15 + 2, 6 * 15 + 2]
     env_settings["walls"] = [
-        (5, 3),
-        (5, 4),
-        (5, 5),
-        (5, 6),
-        (5, 7),
-        (5, 8),
-        (3, 0),
-        (3, 1),
-        (3, 2),
-        (3, 3),
-        (3, 4),
+        (6, 5),
+        (6, 6),
+        (6, 7),
+        (6, 8),
+        (6, 9),
+        (4, 5),
+        (4, 6),
+        (4, 7),
+        (4, 8),
+        (4, 9),
+        (0, 5),
+        (1, 5),
+        (2, 5),
+        (3, 5),
+        (7, 5),
+        (8, 5),
+        (9, 5),
+        (10, 5),
+        (0, 9),
+        (1, 9),
+        (2, 9),
+        (3, 9),
+        (7, 9),
+        (8, 9),
+        (9, 9),
+        (10, 9),
     ]
 
-    env_settings["oneway"] = {Actions.LEFT: [(6, 3), (7, 3), (8, 3)]}
-    env_settings["A"] = (7, 7)
-    env_settings["B"] = (1, 7)
-    env_settings["C"] = (7, 1)
-    env_settings["yellow_tiles"] = [(0, 4), (1, 4), (2, 4)]
-    env_settings["sinks"] = []
+    env_settings["forcemove"] = {
+        Actions.RIGHT: [(5, 5), (5, 6), (5, 7), (5, 8), (5, 9)]
+    }
+    env_settings["C"] = (5, 5)
+    env_settings["AB"] = (5, 9)
+    env_settings["D"] = (9, 11)
+    env_settings["E"] = (1, 13)
+    env_settings["F"] = (5, 12)
+    env_settings["yellow_tiles"] = []
+    env_settings["sinks"] = [env_settings["F"]]
 
     env_settings["p"] = 0.98
 
     if use_tlcd:
-        tlcd = dfa_paper_sync_next_sensors()
+        tlcd = dfa_paper_specimen()
     else:
         tlcd = None
 
@@ -102,7 +121,7 @@ def laboratory_config(num_times: int, use_tlcd: bool, step_unit_factor: int) -> 
         rm_test_file=joint_rm_file,
         rm_learning_file_list=local_rm_files,
         env_settings=env_settings,
-        experiment="generator",
+        experiment="laboratory",
         use_prm=True,
         tlcd=tlcd,
     )

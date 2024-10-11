@@ -9,6 +9,7 @@ import numpy as np
 from tcdmarl.Agent.agent import Agent
 from tcdmarl.Environments.common import DecentralizedEnv
 from tcdmarl.Environments.generator.generator_env import GeneratorEnv
+from tcdmarl.Environments.laboratory.laboratory_env import LaboratoryEnv
 from tcdmarl.Environments.routing.routing_env import RoutingEnv
 from tcdmarl.experiments.common import create_centralized_environment
 from tcdmarl.tester.learning_params import LearningParameters
@@ -25,6 +26,10 @@ def create_decentralized_environment(
         ).use_prm(tester.use_prm)
     elif tester.experiment == "generator":
         return GeneratorEnv(
+            agent_list[agent_id].rm_file, agent_id, tester.env_settings, tester.tlcd
+        )
+    elif tester.experiment == "laboratory":
+        return LaboratoryEnv(
             agent_list[agent_id].rm_file, agent_id, tester.env_settings, tester.tlcd
         )
     else:
@@ -346,7 +351,7 @@ def run_multi_agent_experiment(
     """
 
     assert num_times > 0
-    agent_list: List[Agent] = []
+    agent_list: list[Agent] = []
 
     for t in range(num_times):
         # Reseting default step values

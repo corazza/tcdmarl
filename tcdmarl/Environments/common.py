@@ -36,6 +36,9 @@ class Map:
         # Define forbidden transitions corresponding to map edges
         self.forbidden_transitions: Set[Tuple[int, int, Actions]] = set()
 
+        # Define forced transitions
+        self.forced_transitions: dict[tuple[int, int], Actions] = {}
+
         for row in range(self.number_of_rows):
             # If in left-most column, can't move left.
             self.forbidden_transitions.add((row, 0, Actions.LEFT))
@@ -63,7 +66,12 @@ class Map:
         # self.forbidden_transitions.add((5, 8, Actions.UP))
         # self.forbidden_transitions.add((7, 8, Actions.UP))
 
-        one_way_door_locations = self.env_settings["oneway"]
+        force_move_locations = self.env_settings.get("forcemove", {})
+        for direction, locations in force_move_locations.items():
+            for row, col in locations:
+                self.forced_transitions[(row, col)] = direction
+
+        one_way_door_locations = self.env_settings.get("oneway", {})
         for direction, locations in one_way_door_locations.items():
             for row, col in locations:
                 if direction == Actions.UP:
@@ -86,6 +94,16 @@ class Map:
                     self.forbidden_transitions.add((row, col, Actions.UP))
                     self.forbidden_transitions.add((row, col, Actions.DOWN))
                     self.forbidden_transitions.add((row, col, Actions.LEFT))
+
+        for (row, col), action in self.forced_transitions.items():
+            if action == Actions.UP:
+                self.forbidden_transitions.add((row - 1, col, Actions.DOWN))
+            elif action == Actions.DOWN:
+                self.forbidden_transitions.add((row + 1, col, Actions.UP))
+            elif action == Actions.LEFT:
+                self.forbidden_transitions.add((row, col - 1, Actions.RIGHT))
+            elif action == Actions.RIGHT:
+                self.forbidden_transitions.add((row, col + 1, Actions.LEFT))
 
     def get_num_states(self) -> int:
         return self.num_states
@@ -125,7 +143,7 @@ class Map:
         col : int
             The column index of state s in the gridworld.
         """
-        row: int = np.floor_divide(s, self.number_of_rows)
+        row: int = np.floor_divide(s, self.number_of_columns)
         col: int = np.mod(s, self.number_of_columns)
 
         return (row, col)

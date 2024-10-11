@@ -1,4 +1,5 @@
 import copy
+from itertools import chain
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -8,16 +9,16 @@ import numpy as np
 from numpy import int32
 from numpy.typing import NDArray
 
-from tcdmarl.environment_configs.generator_config import generator_config
+from tcdmarl.environment_configs.laboratory_config import laboratory_config
 from tcdmarl.Environments.common import STR_TO_ACTION, Actions, CentralizedEnv
-from tcdmarl.Environments.generator.map import GeneratorMap
+from tcdmarl.Environments.laboratory.map import LaboratoryMap
 from tcdmarl.reward_machines.sparse_reward_machine import SparseRewardMachine
 from tcdmarl.shared_mem import PRM_TLCD_MAP
 from tcdmarl.tcrl.reward_machines.rm_common import CausalDFA, ProbabilisticRewardMachine
-from tcdmarl.utils import sparse_rm_to_prm
+from tcdmarl.utils import compute_caching_name, sparse_rm_to_prm
 
 
-class MultiAgentGeneratorEnv(CentralizedEnv):  # TODO rename to CentralizedRoutingEnv
+class MultiAgentLaboratoryEnv(CentralizedEnv):  # TODO rename to CentralizedRoutingEnv
     """
     Multi-agent version.
 
@@ -41,7 +42,7 @@ class MultiAgentGeneratorEnv(CentralizedEnv):  # TODO rename to CentralizedRouti
             Dictionary of environment settings
         """
         self.num_agents: int = 2
-        self.map = GeneratorMap(env_settings)
+        self.map = LaboratoryMap(env_settings)
 
         # Define Initial states of all agents
         self.s_i: NDArray[int32] = np.full(self.num_agents, -1, dtype=int)
@@ -66,28 +67,31 @@ class MultiAgentGeneratorEnv(CentralizedEnv):  # TODO rename to CentralizedRouti
         self._use_prm: bool = False
         self.prm: ProbabilisticRewardMachine
 
-    def use_prm(self, value: bool) -> "MultiAgentGeneratorEnv":
+    def use_prm(self, value: bool) -> "MultiAgentLaboratoryEnv":
         if not value:
             return self
 
-        if self.tlcd is not None:
-            save_path = f"{self._saved_rm_path}_TLCD"
-        else:
-            save_path = f"{self._saved_rm_path}_NO_TLCD"
+        # Compute the caching string based on whether TLCD is used or not
+        cache_suffix = "TLCD" if self.tlcd is not None else "NO_TLCD"
 
-        if save_path not in PRM_TLCD_MAP:
+        # Compute the save_path using the improved caching string logic
+        cache_name = compute_caching_name(self._saved_rm_path, cache_suffix)
+
+        if cache_name not in PRM_TLCD_MAP:
             self.prm = sparse_rm_to_prm(self.reward_machine)
+
             if self.tlcd is not None:
-                self.prm = self.prm.add_tlcd(self.tlcd, Path(save_path).name)
-            PRM_TLCD_MAP[save_path] = self.prm
+                self.prm = self.prm.add_tlcd(self.tlcd, cache_name)
+
+            PRM_TLCD_MAP[cache_name] = self.prm
         else:
-            self.prm = copy.deepcopy(PRM_TLCD_MAP[save_path])
+            self.prm = copy.deepcopy(PRM_TLCD_MAP[cache_name])
 
         self.u = self.prm.get_initial_state()
         self._use_prm = True
         return self
 
-    def get_map(self) -> GeneratorMap:
+    def get_map(self) -> LaboratoryMap:
         return self.map
 
     def environment_step(
@@ -240,15 +244,39 @@ class MultiAgentGeneratorEnv(CentralizedEnv):  # TODO rename to CentralizedRouti
         row1, col1 = self.map.get_state_description(s_next[agent1])
         row2, col2 = self.map.get_state_description(s_next[agent2])
 
-        if (row1, col1) == self.map.env_settings["A"]:
-            label.append("a")
+        if (row1, col1) == self.map.env_settings["C"] and (
+            row2,
+            col2,
+        ) == self.map.env_settings["C"]:
+            label.append("c")
 
-        if (row2, col2) == self.map.env_settings["B"]:
-            label.append("b")
+        if (row1, col1) == self.map.env_settings["AB"] and (
+            row2,
+            col2,
+        ) == self.map.env_settings["AB"]:
+            if np.random.rand() < 0.5:
+                label.append("a")
+            else:
+                label.append("b")
 
-        if (row1, col1) == self.map.env_settings["C"]:
-            if (row2, col2) not in self.map.yellow_tiles:
-                label.append("c")
+        if (row1, col1) == self.map.env_settings["D"] and (
+            row2,
+            col2,
+        ) == self.map.env_settings["D"]:
+            label.append("d")
+
+        if (row1, col1) == self.map.env_settings["E"] and (
+            row2,
+            col2,
+        ) == self.map.env_settings["E"]:
+            label.append("e")
+
+        # not strictly allowed, but two private events F1, F2, could achieve the same effect
+        if (row1, col1) == self.map.env_settings["F"] or (
+            row2,
+            col2,
+        ) == self.map.env_settings["F"]:
+            label.append("f")
 
         return label
 
@@ -272,8 +300,8 @@ class MultiAgentGeneratorEnv(CentralizedEnv):  # TODO rename to CentralizedRouti
         for loc in self.map.env_settings["walls"]:
             display[loc] = -1  # Walls are marked as -1
 
-        # Mark special cells (A, B, C)
-        special_cells = ["A", "B", "C"]
+        # Mark special cells
+        special_cells = ["C", "AB", "D", "E", "F"]
         for cell in special_cells:
             display[self.map.env_settings[cell]] = 9  # Mark A, B, C as 9 in the grid
 
@@ -282,8 +310,11 @@ class MultiAgentGeneratorEnv(CentralizedEnv):  # TODO rename to CentralizedRouti
             display[loc] = 8  # Yellow tiles are marked as 8
 
         # Display one-way doors
-        one_way_doors = self.map.env_settings["oneway"]
-        for _direction, locations in one_way_doors.items():
+        one_way_doors = self.map.env_settings.get("oneway", {})
+        forced_transitions = self.map.env_settings.get("forcemove", {})
+        for _direction, locations in chain(
+            one_way_doors.items(), forced_transitions.items()
+        ):
             for loc in locations:
                 display[loc] = (
                     5  # Mark one-way doors as 5 (you can change the number if desired)
@@ -325,25 +356,25 @@ class MultiAgentGeneratorEnv(CentralizedEnv):  # TODO rename to CentralizedRouti
 
         # Dictionary to hold labels and their positions
         special_cells = {
-            "A": self.map.env_settings["A"],
-            "B": self.map.env_settings["B"],
+            "AB": self.map.env_settings["AB"],
             "C": self.map.env_settings["C"],
+            "D": self.map.env_settings["D"],
+            "E": self.map.env_settings["E"],
+            "F": self.map.env_settings["F"],
         }
-
-        # Mark special cells on the grid
-        for label, loc in special_cells.items():
-            display[loc] = SPECIAL
 
         # Mark yellow tiles on the grid
         for loc in self.map.yellow_tiles:
             display[loc] = YELLOW_TILE
 
-        # Place agents on the grid and update special_cells with agent positions
+        # Place agents on the grid
+        agent_labels: dict[str, tuple[int, int]] = {}
         for i in range(self.num_agents):
             row, col = self.map.get_state_description(s[i])
             display[row, col] = AGENT
             agent_label = f"A{i+1}"  # Short label for agents
-            special_cells[agent_label] = (row, col)
+            agent_labels[agent_label] = (row, col)
+            # special_cells[agent_label] = (row, col)
 
         # Display one-way doors as arrows in the grid (background will be white)
         arrow_symbols = {
@@ -353,11 +384,18 @@ class MultiAgentGeneratorEnv(CentralizedEnv):  # TODO rename to CentralizedRouti
             Actions.RIGHT: "→",
         }
         arrow_locations = {}
-        for direction, locations in self.map.env_settings["oneway"].items():
+        for direction, locations in chain(
+            self.map.env_settings.get("oneway", {}).items(),
+            self.map.env_settings.get("forcemove", {}).items(),
+        ):
             arrow_symbol = arrow_symbols.get(direction, "")
             for row, col in locations:
                 display[row, col] = ARROW  # Background is white for arrows
                 arrow_locations[(row, col)] = arrow_symbol
+
+        # Mark special cells on the grid
+        for label, loc in special_cells.items():
+            display[loc] = SPECIAL
 
         # Define colors for each cell type, including arrows
         cell_colors = [
@@ -398,7 +436,7 @@ class MultiAgentGeneratorEnv(CentralizedEnv):  # TODO rename to CentralizedRouti
         ax.invert_yaxis()
 
         # Add text labels to special cells, agents, and arrows
-        for label, (row, col) in special_cells.items():
+        for label, (row, col) in chain(special_cells.items(), agent_labels.items()):
             ax.text(
                 col + 0.5,
                 row + 0.5,
@@ -444,14 +482,14 @@ class MultiAgentGeneratorEnv(CentralizedEnv):  # TODO rename to CentralizedRouti
 
 
 def play():
-    tester = generator_config(num_times=0, use_tlcd=False, step_unit_factor=100)
+    tester = laboratory_config(num_times=0, use_tlcd=False, step_unit_factor=100)
 
     env_settings = tester.env_settings
     env_settings["p"] = 1.0
 
     num_agents: int = tester.num_agents
 
-    game = MultiAgentGeneratorEnv(tester.rm_test_file, env_settings, tlcd=None)
+    game = MultiAgentLaboratoryEnv(tester.rm_test_file, env_settings, tlcd=None)
 
     s = game.get_initial_team_state()
     print(s)
@@ -475,11 +513,11 @@ def play():
                 print(STR_TO_ACTION[usr_inp])
                 a[i] = STR_TO_ACTION[usr_inp]
 
-        r, l, s = game.environment_step(s, a)
+        r, label, s = game.environment_step(s, a)
 
         print("---------------------")
         print("Next States: ", s)
-        print("Label: ", l)
+        print("Label: ", label)
         print("Reward: ", r)
         print("RM state: ", game.u)
         print("---------------------")

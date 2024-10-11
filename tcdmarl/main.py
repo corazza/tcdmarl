@@ -231,6 +231,19 @@ def run_experiment(
             num_times=num_trials,
             show_print=True,
         )
+    elif experiment == "centralized_laboratory":
+        # Get test object from config script
+        tester = laboratory_config(
+            num_times=num_trials,
+            use_tlcd=use_tlcd,
+            step_unit_factor=step_unit_factor,
+        )
+        tester = run_centralized_experiment(
+            tester=tester,
+            _num_agents=tester.num_agents,
+            num_times=tester.num_times,
+            show_print=True,
+        )
     elif experiment == "routing":
         # Get test object from config script
         tester = routing_config(

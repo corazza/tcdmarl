@@ -11,12 +11,18 @@ class ExperimentConfig(TypedDict):
     centralized: bool
 
     # Use the TL-CD to expedite learning
-    use_tl_cd: bool
+    use_tlcd: bool
+
+    # Episode length
+    episode_length: int
+
+    # Number of episodes
+    num_episodes: int
 
 
-class Config(TypedDict):
+class RunConfig(TypedDict):
     # Number of separate trials to run the algorithm for
     num_trials: int
 
-    # Step unit factor
-    step_unit_factor: int
+    # Run experiments
+    experiments: list[ExperimentConfig]

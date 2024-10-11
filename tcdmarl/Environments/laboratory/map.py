@@ -4,12 +4,12 @@ from typing import Any
 from tcdmarl.Environments.common import Actions, Map
 
 
-class GeneratorState:
+class LaboratoryState:
     def __init__(self, button_pressed: bool):
         self.button_pressed: bool = button_pressed
 
     def __eq__(self, other: Any) -> bool:
-        if not isinstance(other, GeneratorState):
+        if not isinstance(other, LaboratoryState):
             return False
         return self.button_pressed == other.button_pressed
 
@@ -20,13 +20,13 @@ class GeneratorState:
         return self.__str__()
 
 
-class GeneratorMap(Map):
+class LaboratoryMap(Map):
     def __init__(self, env_settings: dict[str, Any]):
         super().__init__(env_settings=env_settings)
         self.yellow_tiles = self.env_settings["yellow_tiles"]
 
     def get_next_state(
-        self, s: int, a: int, agent_id: int, generator_state: GeneratorState
+        self, s: int, a: int, agent_id: int, generator_state: LaboratoryState
     ) -> tuple[int, int]:
         """
         Get the next state in the environment given action a is taken from state s.
@@ -79,7 +79,14 @@ class GeneratorMap(Map):
                 assert a == 1
                 a_ = 2
 
-        action_ = Actions(a_)
+        if (row, col) in self.forced_transitions:
+            if generator_state.button_pressed:
+                action_ = Actions(self.forced_transitions[(row, col)])
+            else:
+                action_ = Actions.NONE
+        else:
+            action_ = Actions(a_)
+
         if (row, col, action_) not in self.forbidden_transitions:
             if action_ == Actions.UP:
                 row -= 1
@@ -92,27 +99,18 @@ class GeneratorMap(Map):
 
         s_next = self.get_state_from_description(row, col)
 
-        if agent_id == 0:
-            pass
-        else:
-            assert agent_id == 1
-            # Movable door
-            if not generator_state.button_pressed:
-                if (row, col) in self.yellow_tiles:
-                    s_next = s
-
         if stuck:
             s_next = s
 
         last_action = a_
         return s_next, last_action
 
-    def compute_joint_state(self, u: int) -> GeneratorState:
-        return GeneratorState(button_pressed=u in [2, 3, 4, 5])
+    def compute_joint_state(self, u: int) -> LaboratoryState:
+        return LaboratoryState(button_pressed=u != 0)
 
-    def compute_state(self, agent_id: int, u: int) -> GeneratorState:
+    def compute_state(self, agent_id: int, u: int) -> LaboratoryState:
         if agent_id == 0:
-            return GeneratorState(button_pressed=u in [1, 3, 5])
+            return LaboratoryState(button_pressed=u != 0)
         else:
             assert agent_id == 1
-            return GeneratorState(button_pressed=u in [1])
+            return LaboratoryState(button_pressed=u != 0)

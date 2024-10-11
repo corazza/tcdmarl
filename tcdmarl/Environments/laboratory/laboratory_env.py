@@ -1,4 +1,5 @@
 import copy
+from itertools import chain
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -7,13 +8,13 @@ from numpy import int32
 from numpy.typing import NDArray
 
 from tcdmarl.consts import SYNCHRONIZATION_THRESH
-from tcdmarl.environment_configs.routing_config import routing_config
+from tcdmarl.environment_configs.laboratory_config import laboratory_config
 from tcdmarl.Environments.common import STR_TO_ACTION, DecentralizedEnv
-from tcdmarl.Environments.generator.map import GeneratorMap
+from tcdmarl.Environments.laboratory.map import LaboratoryMap
 from tcdmarl.reward_machines.sparse_reward_machine import SparseRewardMachine
 from tcdmarl.shared_mem import PRM_TLCD_MAP
 from tcdmarl.tcrl.reward_machines.rm_common import CausalDFA, ProbabilisticRewardMachine
-from tcdmarl.utils import sparse_rm_to_prm
+from tcdmarl.utils import compute_caching_name, sparse_rm_to_prm
 
 
 class LaboratoryEnv(DecentralizedEnv):  # TODO rename to DecentralizedGeneratorEnv
@@ -44,7 +45,7 @@ class LaboratoryEnv(DecentralizedEnv):  # TODO rename to DecentralizedGeneratorE
             Dictionary of environment settings
         """
         self.agent_id = agent_id
-        self.map = GeneratorMap(env_settings)
+        self.map = LaboratoryMap(env_settings)
 
         self.s_i = self.map.initial_states[self.agent_id - 1]
 
@@ -60,22 +61,25 @@ class LaboratoryEnv(DecentralizedEnv):  # TODO rename to DecentralizedGeneratorE
         self.prm: ProbabilisticRewardMachine
 
     # TODO abstract into one of the env classes
-    def use_prm(self, value: bool) -> "GeneratorEnv":
+    def use_prm(self, value: bool) -> "LaboratoryEnv":
         if not value:
             return self
 
-        if self.tlcd is not None:
-            save_path = f"{self._saved_rm_path}_TLCD"
-        else:
-            save_path = f"{self._saved_rm_path}_NO_TLCD"
+        # Compute the caching string based on whether TLCD is used or not
+        cache_suffix = "TLCD" if self.tlcd is not None else "NO_TLCD"
 
-        if save_path not in PRM_TLCD_MAP:
+        # Compute the save_path using the improved caching string logic
+        cache_name = compute_caching_name(self._saved_rm_path, cache_suffix)
+
+        if cache_name not in PRM_TLCD_MAP:
             self.prm = sparse_rm_to_prm(self.reward_machine)
+
             if self.tlcd is not None:
-                self.prm = self.prm.add_tlcd(self.tlcd, Path(save_path).name)
-            PRM_TLCD_MAP[save_path] = self.prm
+                self.prm = self.prm.add_tlcd(self.tlcd, cache_name)
+
+            PRM_TLCD_MAP[cache_name] = self.prm
         else:
-            self.prm = copy.deepcopy(PRM_TLCD_MAP[save_path])
+            self.prm = copy.deepcopy(PRM_TLCD_MAP[cache_name])
 
         self.u = self.prm.get_initial_state()
         self._use_prm = True
@@ -133,7 +137,7 @@ class LaboratoryEnv(DecentralizedEnv):  # TODO rename to DecentralizedGeneratorE
 
         return r, label, s_next
 
-    def get_map(self) -> GeneratorMap:
+    def get_map(self) -> LaboratoryMap:
         return self.map
 
     def get_mdp_label(self, _s: int, s_next: int, _u: int) -> list[str]:
@@ -145,18 +149,38 @@ class LaboratoryEnv(DecentralizedEnv):  # TODO rename to DecentralizedGeneratorE
         label: list[str] = []
 
         if self.agent_id == 0:
-            if (row, col) == self.map.env_settings["A"]:
-                label.append("a")
-            if (row, col) == self.map.env_settings["C"]:
-                label.append("c")
-        else:
-            assert self.agent_id == 1
+            if (row, col) == self.map.env_settings["AB"]:
+                if np.random.random() <= 0.5:
+                    label.append("a")
+            if (row, col) == self.map.env_settings["F"]:
+                label.append("f")
+
             # Multiagent synchronization
             if np.random.random() <= SYNCHRONIZATION_THRESH:
-                label.append("c")
+                if (row, col) == self.map.env_settings["C"]:
+                    label.append("c")
+                if (row, col) == self.map.env_settings["D"]:
+                    label.append("d")
+                if (row, col) == self.map.env_settings["E"]:
+                    label.append("e")
 
-            if (row, col) == self.map.env_settings["B"]:
-                label.append("b")
+        elif self.agent_id == 1:
+            if (row, col) == self.map.env_settings["AB"]:
+                if np.random.random() <= 0.5:
+                    label.append("b")
+            if (row, col) == self.map.env_settings["F"]:
+                label.append("f")
+
+            # Multiagent synchronization
+            if np.random.random() <= SYNCHRONIZATION_THRESH:
+                if (row, col) == self.map.env_settings["C"]:
+                    label.append("c")
+                if (row, col) == self.map.env_settings["D"]:
+                    label.append("d")
+                if (row, col) == self.map.env_settings["E"]:
+                    label.append("e")
+        else:
+            raise ValueError("Invalid agent_id")
 
         return label
 
@@ -199,8 +223,8 @@ class LaboratoryEnv(DecentralizedEnv):  # TODO rename to DecentralizedGeneratorE
         for loc in self.map.env_settings["walls"]:
             display[loc] = -1  # Walls are marked as -1
 
-        # Mark special cells (A, B, C)
-        special_cells = ["A", "B", "C"]
+        # Mark special cells
+        special_cells = ["C", "AB", "D", "E", "F"]
         for cell in special_cells:
             display[self.map.env_settings[cell]] = 9  # Mark A, B, C as 9 in the grid
 
@@ -209,8 +233,11 @@ class LaboratoryEnv(DecentralizedEnv):  # TODO rename to DecentralizedGeneratorE
             display[loc] = 8  # Yellow tiles are marked as 8
 
         # Display one-way doors
-        one_way_doors = self.map.env_settings["oneway"]
-        for _direction, locations in one_way_doors.items():
+        one_way_doors = self.map.env_settings.get("oneway", {})
+        forced_transitions = self.map.env_settings.get("forcemove", {})
+        for _direction, locations in chain(
+            one_way_doors.items(), forced_transitions.items()
+        ):
             for loc in locations:
                 display[loc] = (
                     5  # Mark one-way doors as 5 (you can change the number if desired)
@@ -226,12 +253,12 @@ class LaboratoryEnv(DecentralizedEnv):  # TODO rename to DecentralizedGeneratorE
 def play():
     agent_id = 0
 
-    tester = routing_config(num_times=0, use_tlcd=False, step_unit_factor=100)
+    tester = laboratory_config(num_times=0, use_tlcd=False, step_unit_factor=100)
 
     env_settings = tester.env_settings
     env_settings["p"] = 0.99
 
-    game = RoutingEnv(
+    game = LaboratoryEnv(
         tester.rm_learning_file_list[agent_id], agent_id, env_settings, tlcd=None
     )
 
@@ -249,12 +276,12 @@ def play():
         print()
         # Executing action
         if a in STR_TO_ACTION:
-            r, l, s = game.environment_step(s, STR_TO_ACTION[a])
+            r, label, s = game.environment_step(s, STR_TO_ACTION[a])
             # r, l, s, failed_task_flag = game.environment_step(s, str_to_action[a])
 
             print("---------------------")
             print("Next States: ", s)
-            print("Label: ", l)
+            print("Label: ", label)
             print("Reward: ", r)
             print("RM state: ", game.u)
             print("failed task: ", failed_task_flag)

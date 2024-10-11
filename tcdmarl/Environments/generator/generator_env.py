@@ -13,7 +13,7 @@ from tcdmarl.Environments.generator.map import GeneratorMap
 from tcdmarl.reward_machines.sparse_reward_machine import SparseRewardMachine
 from tcdmarl.shared_mem import PRM_TLCD_MAP
 from tcdmarl.tcrl.reward_machines.rm_common import CausalDFA, ProbabilisticRewardMachine
-from tcdmarl.utils import sparse_rm_to_prm
+from tcdmarl.utils import compute_caching_name, sparse_rm_to_prm
 
 
 class GeneratorEnv(DecentralizedEnv):  # TODO rename to DecentralizedGeneratorEnv
@@ -64,18 +64,21 @@ class GeneratorEnv(DecentralizedEnv):  # TODO rename to DecentralizedGeneratorEn
         if not value:
             return self
 
-        if self.tlcd is not None:
-            save_path = f"{self._saved_rm_path}_TLCD"
-        else:
-            save_path = f"{self._saved_rm_path}_NO_TLCD"
+        # Compute the caching string based on whether TLCD is used or not
+        cache_suffix = "TLCD" if self.tlcd is not None else "NO_TLCD"
 
-        if save_path not in PRM_TLCD_MAP:
+        # Compute the save_path using the improved caching string logic
+        cache_name = compute_caching_name(self._saved_rm_path, cache_suffix)
+
+        if cache_name not in PRM_TLCD_MAP:
             self.prm = sparse_rm_to_prm(self.reward_machine)
+
             if self.tlcd is not None:
-                self.prm = self.prm.add_tlcd(self.tlcd, Path(save_path).name)
-            PRM_TLCD_MAP[save_path] = self.prm
+                self.prm = self.prm.add_tlcd(self.tlcd, cache_name)
+
+            PRM_TLCD_MAP[cache_name] = self.prm
         else:
-            self.prm = copy.deepcopy(PRM_TLCD_MAP[save_path])
+            self.prm = copy.deepcopy(PRM_TLCD_MAP[cache_name])
 
         self.u = self.prm.get_initial_state()
         self._use_prm = True
