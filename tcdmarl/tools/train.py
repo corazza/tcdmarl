@@ -2,30 +2,20 @@
 Run the experiment specified by the user.
 """
 
-import csv
 import pickle
 from datetime import datetime
 from pathlib import Path
-from types import NoneType
-from typing import Callable, List
 
 import click
-import numpy as np
-from matplotlib import pyplot as plt
-from matplotlib.ticker import FuncFormatter, MaxNLocator
 
 from tcdmarl.config import ExperimentConfig, RunConfig
-from tcdmarl.consts import ALL_EXPERIMENT_NAMES
-from tcdmarl.defaults import DEFAULT_NUM_SEPARATE_TRIALS, DEFAULT_STEP_UNIT_FACTOR
 from tcdmarl.environment_configs.generator_config import generator_config
 from tcdmarl.environment_configs.laboratory_config import laboratory_config
-from tcdmarl.environment_configs.routing_config import routing_config
-from tcdmarl.experiments.common import create_centralized_environment
 from tcdmarl.experiments.dqprm import run_multi_agent_experiment
 from tcdmarl.experiments.run_centralized_coordination_experiment import (
     run_centralized_experiment,
 )
-from tcdmarl.path_consts import RESULTS_DIR
+from tcdmarl.path_consts import RESULTS_DIR, WORK_DIR
 from tcdmarl.tester.tester import Tester
 from tcdmarl.tools.plot import plot_multi_agent_results
 from tcdmarl.utils import experiment_name, load_typed_dict
@@ -157,6 +147,10 @@ def main(
     """
     Run the experiment specified by the user.
     """
+    # remove all *.p files in WORK_DIR
+    for file in WORK_DIR.glob("*.p"):
+        file.unlink()
+
     assert not (all_experiments and experiment_index is not None)
     plot_afterwards = not all_experiments
     config_path: Path = Path(config)

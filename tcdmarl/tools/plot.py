@@ -14,8 +14,6 @@ from matplotlib import pyplot as plt
 from matplotlib.ticker import FuncFormatter, MaxNLocator
 
 from tcdmarl.config import ExperimentConfig
-from tcdmarl.consts import ALL_EXPERIMENT_NAMES
-from tcdmarl.defaults import DEFAULT_NUM_SEPARATE_TRIALS, DEFAULT_STEP_UNIT_FACTOR
 from tcdmarl.environment_configs.generator_config import generator_config
 from tcdmarl.environment_configs.laboratory_config import laboratory_config
 from tcdmarl.environment_configs.routing_config import routing_config
@@ -325,18 +323,6 @@ def run_experiment(
     "--all-experiments",
     is_flag=True,
     help="run all experiments",
-)
-@click.option(
-    "--num-trials",
-    type=int,
-    default=DEFAULT_NUM_SEPARATE_TRIALS,
-    help="Number of separate trials to run the algorithm for",
-)
-@click.option(
-    "--step-unit-factor",
-    type=int,
-    default=DEFAULT_STEP_UNIT_FACTOR,
-    help="Number of separate trials to run the algorithm for",
 )
 def main(
     collection: str,

@@ -1,6 +1,5 @@
 from typing import Optional
 
-from tcdmarl.consts import ALL_EXPERIMENT_NAMES
 from tcdmarl.Environments.common import CentralizedEnv
 from tcdmarl.Environments.generator.multi_agent_generator_env import (
     MultiAgentGeneratorEnv,
@@ -33,5 +32,6 @@ def create_centralized_environment(
         )
     else:
         raise ValueError(
-            f"experiment should be one of: f{ALL_EXPERIMENT_NAMES}, got {tester.experiment}"
+            f"Experiment '{tester.experiment}' not recognized. Please use one of the following: "
+            f"['routing', 'generator', 'laboratory']"
         )

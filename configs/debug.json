@@ -1,5 +1,5 @@
 {
-    "num_trials": 10,
+    "num_trials": 2,
     "experiments": [
         {
             "environment_name": "generator",
