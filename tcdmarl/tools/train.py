@@ -5,6 +5,7 @@ Run the experiment specified by the user.
 import pickle
 from datetime import datetime
 from pathlib import Path
+from types import NoneType
 
 import click
 
@@ -138,11 +139,16 @@ def run_experiment(
     type=int,
     help="the index of the experiment to run (within the config file)",
 )
+@click.option(
+    "--environment-name",
+    help="Run all experiments for a specific environment",
+)
 def main(
     config: str,
     collection: str,
     all_experiments: bool,
-    experiment_index: int,
+    experiment_index: int | NoneType,
+    environment_name: str | NoneType,
 ):
     """
     Run the experiment specified by the user.
@@ -151,16 +157,30 @@ def main(
     for file in WORK_DIR.glob("*.p"):
         file.unlink()
 
-    assert not (all_experiments and experiment_index is not None)
-    plot_afterwards = not all_experiments
     config_path: Path = Path(config)
     run_config: RunConfig = load_typed_dict(RunConfig, config_path)
 
-    experiments_to_run: list[ExperimentConfig] = (
-        run_config["experiments"]
-        if all_experiments
-        else [run_config["experiments"][experiment_index]]
-    )
+    if all_experiments:
+        assert experiment_index is None and environment_name is None
+        experiments_to_run: list[ExperimentConfig] = run_config["experiments"]
+        plot_afterwards: bool = False
+    elif experiment_index is not None:
+        assert environment_name is None
+        experiments_to_run: list[ExperimentConfig] = [
+            run_config["experiments"][experiment_index]
+        ]
+        plot_afterwards: bool = True
+    elif environment_name is not None:
+        experiments_to_run: list[ExperimentConfig] = [
+            experiment
+            for experiment in run_config["experiments"]
+            if experiment["environment_name"] == environment_name
+        ]
+        plot_afterwards: bool = False
+    else:
+        raise click.UsageError(
+            "One of the options --all-experiments, --experiment-index, or --environment-name must be provided."
+        )
 
     for experiment_config in experiments_to_run:
         run_experiment(

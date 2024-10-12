@@ -3,7 +3,7 @@ from tcdmarl.tcrl.reward_machines.rm_common import CausalDFA
 
 
 def dfa_paper_no_drain_after_unlock() -> CausalDFA:
-    builder = DFABuilder(appears=frozenset({"a", "b", "c"}))
+    builder = DFABuilder(appears=frozenset({"a", "c"}))
 
     builder.t(0, "!c", 0)
     builder.t(0, "c", 1)

@@ -22,12 +22,11 @@
             "name": "Show MDP: Laboratory",
             "type": "debugpy",
             "request": "launch",
-            "program": "${workspaceFolder}/tcdmarl/main.py",
+            "program": "${workspaceFolder}/tcdmarl/tools/show.py",
             "console": "integratedTerminal",
             "args": [
-                "--experiment",
-                "laboratory",
-                "--show"
+                "--environment",
+                "generator"
             ],
             "env": {
                 "PYTHONPATH": "${workspaceFolder}"
@@ -87,7 +86,7 @@
             }
         },
         {
-            "name": "Train: paper",
+            "name": "Train: paper (generator only)",
             "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/tcdmarl/tools/train.py",
@@ -97,7 +96,8 @@
                 "configs/paper.json",
                 "--collection",
                 "${input:collection}",
-                "--all-experiments",
+                "--environment-name",
+                "generator",
             ],
             "env": {
                 "PYTHONPATH": "${workspaceFolder}"

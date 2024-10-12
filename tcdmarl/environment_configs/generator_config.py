@@ -80,7 +80,7 @@ def generator_config(num_times: int, config: ExperimentConfig) -> Tester:
     ]
 
     env_settings["oneway"] = {Actions.LEFT: [(6, 3), (7, 3), (8, 3)]}
-    env_settings["A"] = (7, 7)
+    env_settings["A"] = (6, 8)
     env_settings["B"] = (1, 7)
     env_settings["C"] = (7, 1)
     env_settings["yellow_tiles"] = [(0, 4), (1, 4), (2, 4)]
