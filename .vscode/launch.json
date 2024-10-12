@@ -8,12 +8,11 @@
             "name": "Show MDP: Generator",
             "type": "debugpy",
             "request": "launch",
-            "program": "${workspaceFolder}/tcdmarl/main.py",
+            "program": "${workspaceFolder}/tcdmarl/tools/show.py",
             "console": "integratedTerminal",
             "args": [
-                "--experiment",
-                "generator",
-                "--show"
+                "--environment",
+                "generator"
             ],
             "env": {
                 "PYTHONPATH": "${workspaceFolder}"
