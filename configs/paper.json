@@ -20,14 +20,14 @@
             "centralized": true,
             "use_tlcd": false,
             "episode_length": 1000,
-            "num_episodes": 100
+            "num_episodes": 150
         },
         {
             "environment_name": "generator",
             "centralized": true,
             "use_tlcd": true,
             "episode_length": 1000,
-            "num_episodes": 100
+            "num_episodes": 150
         },
         {
             "environment_name": "laboratory",
