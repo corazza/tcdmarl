@@ -97,7 +97,7 @@ def run_qlearning_task(
                 tlcd=tester.tlcd,
             ).use_prm(tester.use_prm)
             # Pass the q function directly. Note that the q-function will be updated during testing.
-            # JAN: it does not seem to be the case that the Q-function will be updated during testing, because we use update_q_function=False in the testing function
+            # : it does not seem to be the case that the Q-function will be updated during testing, because we use update_q_function=False in the testing function
             centralized_agent_copy.q = centralized_agent.q
             # if tester.use_prm:
             #     centralized_agent_copy.prm.terminal_states = (
